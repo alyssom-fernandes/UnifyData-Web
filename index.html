@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnifyData Web</title>
+    <link href="style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+    <!-- Bibliotecas JS (Importadas via CDN para rodar 100% no navegador) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>UNIFYDATA</h1>
+        <div class="title-line"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Secao 1: Banco de Dados de Matrículas (Persistente) -->
+        <div class="card">
+            <h2><span class="material-symbols-outlined">storage</span> Banco de Dados Local (Matrículas e Empresas)</h2>
+            <p>O sistema guarda as matrículas, CPFs e Empresas na memória. Faça este procedimento <b>APENAS</b> quando precisar cadastrar novos funcionários.</p>
+            <p style="color: #bbb; margin-bottom: 2rem;">Funcionários registrados na memória: <strong id="db-count" style="color: white; font-size: 1.2rem;">0</strong></p>
+            
+            <div class="grid-2">
+                <div class="drop-zone" id="drop-db-pdf" onclick="document.getElementById('upload-db-pdf').click()">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">picture_as_pdf</span>
+                    <p>1. PDF de Contas a Receber (Linx)</p>
+                    <input type="file" id="upload-db-pdf" accept=".pdf" style="display: none;">
+                    <div id="db-pdf-list" class="file-list"></div>
+                </div>
+                <div class="drop-zone" id="drop-db-hr" onclick="document.getElementById('upload-db-hr').click()">
+                    <span class="material-symbols-outlined" style="font-size: 2rem;">folder_open</span>
+                    <p>2. Planilhas do <b>RH</b> (.xls)</p>
+                    <input type="file" id="upload-db-hr" accept=".xls,.xlsx,.csv" multiple style="display:none">
+                    <div id="db-hr-list" class="file-list"></div>
+                </div>
+            </div>
+            
+            <button id="btn-update-db" class="btn mt" style="background: #2E7D32;" disabled>
+                <span class="material-symbols-outlined">save</span> Atualizar Memória do Sistema
+            </button>
+            <div id="db-status" class="status"></div>
+        </div>
+
+        <!-- Secao 2: Processamento Mensal -->
+        <div class="card mt">
+            <h2><span class="material-symbols-outlined">analytics</span> Fechamento Mensal (Rápido)</h2>
+            <p>Arraste os consumos do mês extraídos do Linx. O sistema fará o resto cruzando com o Banco de Dados!</p>
+            <div class="drop-zone" id="drop-linx" onclick="document.getElementById('upload-linx').click()">
+                <span class="material-symbols-outlined" style="font-size: 2rem;">shopping_cart</span>
+                <p>Arraste os consumos do <b>Linx</b> (.csv)</p>
+                <input type="file" id="upload-linx" accept=".csv" multiple style="display:none">
+                <div id="linx-files-list" class="file-list"></div>
+            </div>
+            <button id="btn-process" class="btn mt w-full" disabled>
+                <span class="material-symbols-outlined">bolt</span> Processar e Gerar Planilha
+            </button>
+        </div>
+
+        <!-- Secao 3: Central de Divergências -->
+        <div id="divergence-section" class="card mt hidden">
+            <h2 style="color: var(--warning);"><span class="material-symbols-outlined">warning</span> Central de Pendências</h2>
+            <p>Os funcionários abaixo não foram encontrados ou estão sem vínculo de empresa.</p>
+            <div id="divergence-list"></div>
+        </div>
+
+        <!-- Secao 4: Download -->
+        <div id="success-section" class="card mt hidden" style="text-align: center;">
+            <h2 style="color: var(--success);"><span class="material-symbols-outlined">check_circle</span> Tudo Certo!</h2>
+            <p>O cruzamento por matrículas foi finalizado com sucesso.</p>
+            <button id="btn-download" class="btn mt">
+                <span class="material-symbols-outlined">download</span> Baixar Planilha Consolidada
+            </button>
+            <br><br>
+            <button id="btn-reset" class="btn-secondary" style="margin-top: 1rem;">Processar Novo Mês</button>
+        </div>
+    </div>
+    
+    <div class="footer">POWERED BY AFN SYSTEMS</div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
