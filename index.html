@@ -1,88 +1,230 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="escuro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UnifyData Web</title>
-    <link href="style.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    
-    <!-- Bibliotecas JS (Importadas via CDN para rodar 100% no navegador) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.sheetjs.com https://cdnjs.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; worker-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>UnifyData · Fechamento de consumo</title>
+    <meta name="description" content="Cruza os consumos dos funcionários no Linx com a base do RH e gera a planilha de desconto por empresa. Roda inteiro no navegador.">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#141416">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:title" content="UnifyData · Fechamento de consumo">
+    <meta property="og:description" content="Do Linx à folha de pagamento: consumos dos funcionários cruzados com a base do RH, uma aba por empresa. Tudo no navegador.">
+    <meta property="og:url" content="https://alyssom-fernandes.github.io/UnifyData-Web/">
+    <meta property="og:image" content="https://alyssom-fernandes.github.io/UnifyData-Web/docs/telas/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+    <script src="js/boot.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@85..100,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>UNIFYDATA</h1>
-        <div class="title-line"></div>
-    </div>
-    
-    <div class="container">
-        <!-- Secao 1: Banco de Dados de Matrículas (Persistente) -->
-        <div class="card">
-            <h2><span class="material-symbols-outlined">storage</span> Banco de Dados Local (Matrículas e Empresas)</h2>
-            <p>O sistema guarda as matrículas, CPFs e Empresas na memória. Faça este procedimento <b>APENAS</b> quando precisar cadastrar novos funcionários.</p>
-            <p style="color: #bbb; margin-bottom: 2rem;">Funcionários registrados na memória: <strong id="db-count" style="color: white; font-size: 1.2rem;">0</strong></p>
-            
-            <div class="grid-2">
-                <div class="drop-zone" id="drop-db-pdf" onclick="document.getElementById('upload-db-pdf').click()">
-                    <span class="material-symbols-outlined" style="font-size: 2rem;">picture_as_pdf</span>
-                    <p>1. PDF de Contas a Receber (Linx)</p>
-                    <input type="file" id="upload-db-pdf" accept=".pdf" style="display: none;">
-                    <div id="db-pdf-list" class="file-list"></div>
-                </div>
-                <div class="drop-zone" id="drop-db-hr" onclick="document.getElementById('upload-db-hr').click()">
-                    <span class="material-symbols-outlined" style="font-size: 2rem;">folder_open</span>
-                    <p>2. Planilhas do <b>RH</b> (.xls)</p>
-                    <input type="file" id="upload-db-hr" accept=".xls,.xlsx,.csv" multiple style="display:none">
-                    <div id="db-hr-list" class="file-list"></div>
-                </div>
+    <svg class="sprite" aria-hidden="true">
+        <symbol id="i-marca" viewBox="0 0 32 32"><rect class="marca__a" x="4.2" y="4.2" width="15.6" height="15.6" rx="4.2"/><rect class="marca__b" x="12.2" y="12.2" width="15.6" height="15.6" rx="4.2"/><path class="marca__c" d="M12.2 16.4a4.2 4.2 0 0 1 4.2-4.2h3.4v3.4a4.2 4.2 0 0 1-4.2 4.2h-3.4z"/></symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4m0 0L8 8m4-4 4 4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+        <symbol id="i-arquivo" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5"/></symbol>
+        <symbol id="i-fechar" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></symbol>
+        <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+        <symbol id="i-lua" viewBox="0 0 24 24"><path d="M20 14.2A8 8 0 0 1 9.8 4 8 8 0 1 0 20 14.2Z"/></symbol>
+        <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></symbol>
+        <symbol id="i-tabela" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10"/></symbol>
+        <symbol id="i-imprimir" viewBox="0 0 24 24"><path d="M7 8V3.5h10V8M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v6.5H7z"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></symbol>
+        <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M10.3 4.2 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4M12 17h.01"/></symbol>
+        <symbol id="i-recomecar" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L8.5 4.64A1 1 0 0 0 7 5.5Z"/></symbol>
+        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8h.01"/></symbol>
+        <symbol id="i-cadeado" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    </svg>
+
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+    <div class="app">
+        <!-- Lateral: marca, andamento das etapas, tema e assinatura -->
+        <aside class="lateral" aria-label="Andamento do fechamento">
+            <div class="marca">
+                <svg class="marca__simbolo" aria-hidden="true"><use href="#i-marca"/></svg>
+                <span class="marca__nome">UnifyData</span>
             </div>
-            
-            <button id="btn-update-db" class="btn mt" style="background: #2E7D32;" disabled>
-                <span class="material-symbols-outlined">save</span> Atualizar Memória do Sistema
-            </button>
-            <div id="db-status" class="status"></div>
-        </div>
 
-        <!-- Secao 2: Processamento Mensal -->
-        <div class="card mt">
-            <h2><span class="material-symbols-outlined">analytics</span> Fechamento Mensal (Rápido)</h2>
-            <p>Arraste os consumos do mês extraídos do Linx. O sistema fará o resto cruzando com o Banco de Dados!</p>
-            <div class="drop-zone" id="drop-linx" onclick="document.getElementById('upload-linx').click()">
-                <span class="material-symbols-outlined" style="font-size: 2rem;">shopping_cart</span>
-                <p>Arraste os consumos do <b>Linx</b> (.csv)</p>
-                <input type="file" id="upload-linx" accept=".csv" multiple style="display:none">
-                <div id="linx-files-list" class="file-list"></div>
+            <p class="lateral__rotulo">Fechamento</p>
+            <ol class="passos">
+                <li><a class="passo" id="passo-base" href="#etapa-base">
+                    <span class="passo__num">1</span>
+                    <span class="passo__txt"><b>Base de funcionários</b><small>Nenhum cadastro</small></span>
+                </a></li>
+                <li><a class="passo" id="passo-consumos" href="#etapa-consumos">
+                    <span class="passo__num">2</span>
+                    <span class="passo__txt"><b>Consumos do mês</b><small>Nenhum relatório</small></span>
+                </a></li>
+                <li><a class="passo" id="passo-pendencias" href="#etapa-pendencias" aria-disabled="true">
+                    <span class="passo__num">3</span>
+                    <span class="passo__txt"><b>Pendências</b><small>Depois de processar</small></span>
+                </a></li>
+                <li><a class="passo" id="passo-resultado" href="#etapa-resultado" aria-disabled="true">
+                    <span class="passo__num">4</span>
+                    <span class="passo__txt"><b>Planilha</b><small>Depois de processar</small></span>
+                </a></li>
+            </ol>
+
+            <div class="lateral__rodape">
+                <div class="tema" role="group" aria-label="Tema">
+                    <button class="tema__opcao" type="button" data-opcao="claro" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-sol"/></svg>Claro</button>
+                    <button class="tema__opcao" type="button" data-opcao="escuro" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-lua"/></svg>Escuro</button>
+                </div>
+                <footer class="page-footer" aria-label="AFN Systems, UnifyData">
+                    <div class="pf-marca"><span class="pf-afn">AFN</span><span class="pf-gap"></span><span class="pf-sys">SYSTEMS</span></div>
+                    <span class="pf-pipe" aria-hidden="true">|</span>
+                    <span class="pf-info">UnifyData</span>
+                </footer>
             </div>
-            <button id="btn-process" class="btn mt w-full" disabled>
-                <span class="material-symbols-outlined">bolt</span> Processar e Gerar Planilha
-            </button>
-        </div>
+        </aside>
 
-        <!-- Secao 3: Central de Divergências -->
-        <div id="divergence-section" class="card mt hidden">
-            <h2 style="color: var(--warning);"><span class="material-symbols-outlined">warning</span> Central de Pendências</h2>
-            <p>Os funcionários abaixo não foram encontrados ou estão sem vínculo de empresa.</p>
-            <div id="divergence-list"></div>
-        </div>
+        <div class="principal">
+            <header class="barra">
+                <div class="marca marca--barra">
+                    <svg class="marca__simbolo" aria-hidden="true"><use href="#i-marca"/></svg>
+                    <span class="marca__nome">UnifyData</span>
+                </div>
+                <div class="barra__titulo">
+                    <span>Fechamento de consumo</span>
+                    <span class="chip" id="chip-periodo" hidden></span>
+                </div>
+                <button class="botao-icone" id="btn-tema" type="button" aria-label="Usar tema claro">
+                    <svg class="ic ic--lua" aria-hidden="true"><use href="#i-lua"/></svg>
+                    <svg class="ic ic--sol" aria-hidden="true"><use href="#i-sol"/></svg>
+                </button>
+            </header>
 
-        <!-- Secao 4: Download -->
-        <div id="success-section" class="card mt hidden" style="text-align: center;">
-            <h2 style="color: var(--success);"><span class="material-symbols-outlined">check_circle</span> Tudo Certo!</h2>
-            <p>O cruzamento por matrículas foi finalizado com sucesso.</p>
-            <button id="btn-download" class="btn mt">
-                <span class="material-symbols-outlined">download</span> Baixar Planilha Consolidada
-            </button>
-            <br><br>
-            <button id="btn-reset" class="btn-secondary" style="margin-top: 1rem;">Processar Novo Mês</button>
+            <div class="faixa" id="faixa-demo" hidden>
+                <span><b>Demonstração</b><span class="faixa__longo"> · arquivos fictícios, nada é salvo neste navegador.</span><span class="faixa__curto"> · nada é salvo</span></span>
+                <a href="./" id="sair-demo">Sair<span class="faixa__longo"> da demonstração</span></a>
+            </div>
+
+            <main class="conteudo" id="conteudo" tabindex="-1">
+                <section class="abertura">
+                    <h1>Do Linx à folha,<br><span>sem redigitar nada.</span></h1>
+                    <p>Cruza os consumos dos funcionários com a base do RH e gera a planilha de desconto separada por empresa. Tudo roda neste navegador: nenhum arquivo é enviado para fora do computador.</p>
+                    <div class="abertura__acoes" id="abertura-acoes">
+                        <button class="btn btn--secundario" id="btn-exemplos" type="button">
+                            <svg class="ic" aria-hidden="true"><use href="#i-play"/></svg> Experimentar com arquivos de exemplo
+                        </button>
+                    </div>
+                    <div class="aviso" id="exemplos-aviso" role="status" aria-live="polite" hidden></div>
+                </section>
+
+                <!-- Etapa 1: base de funcionários (persistente) -->
+                <section class="cartao" id="etapa-base" aria-labelledby="titulo-base">
+                    <div class="cartao__cab">
+                        <div>
+                            <p class="cartao__rotulo">Etapa 1</p>
+                            <h2 id="titulo-base">Base de funcionários</h2>
+                            <p class="cartao__resumo" id="base-resumo">Nenhum funcionário cadastrado ainda.</p>
+                        </div>
+                        <button class="btn btn--secundario" id="btn-abrir-base" type="button" aria-expanded="false" aria-controls="base-conteudo" hidden>Atualizar base</button>
+                    </div>
+
+                    <div class="cartao__conteudo" id="base-conteudo">
+                        <p class="cartao__texto">Envie o PDF de contas a receber do Linx e as planilhas do RH. Só é preciso repetir quando entrar gente nova; matrícula, CPF e empresa de cada funcionário ficam guardados neste navegador.</p>
+                        <div class="grade-2">
+                            <div class="envio">
+                                <label class="zona" id="zona-pdf">
+                                    <input class="visualmente-oculto" type="file" id="upload-db-pdf" accept=".pdf,application/pdf">
+                                    <span class="zona__tipo" aria-hidden="true">PDF</span>
+                                    <span class="zona__titulo">Contas a receber do Linx</span>
+                                    <span class="zona__dica"><span class="dica-ponteiro">Arraste o arquivo ou <u>escolha no computador</u></span><span class="dica-toque"><u>Toque para escolher o arquivo</u></span></span>
+                                </label>
+                                <ul class="arquivos" id="lista-pdf"></ul>
+                            </div>
+                            <div class="envio">
+                                <label class="zona" id="zona-rh">
+                                    <input class="visualmente-oculto" type="file" id="upload-db-hr" accept=".xls,.xlsx,.csv" multiple>
+                                    <span class="zona__tipo" aria-hidden="true">XLS</span>
+                                    <span class="zona__titulo">Planilhas do RH</span>
+                                    <span class="zona__dica">Uma por empresa: .xls, .xlsx ou .csv</span>
+                                </label>
+                                <ul class="arquivos" id="lista-rh"></ul>
+                            </div>
+                        </div>
+                        <div class="acoes">
+                            <button class="btn btn--primario" id="btn-update-db" type="button" disabled>Salvar na base</button>
+                        </div>
+                        <div class="aviso" id="base-status" role="status" aria-live="polite" hidden></div>
+                    </div>
+                </section>
+
+                <!-- Etapa 2: consumos do mês -->
+                <section class="cartao" id="etapa-consumos" aria-labelledby="titulo-consumos">
+                    <p class="cartao__rotulo">Etapa 2</p>
+                    <h2 id="titulo-consumos">Consumos do mês</h2>
+                    <p class="cartao__texto">Relatórios <i>Pendências por responsável</i> exportados do Linx em .csv, um por loja. O nome do arquivo vira o nome da coluna na planilha.</p>
+                    <div class="envio">
+                        <label class="zona zona--larga" id="zona-linx">
+                            <input class="visualmente-oculto" type="file" id="upload-linx" accept=".csv,text/csv" multiple>
+                            <span class="zona__tipo" aria-hidden="true">CSV</span>
+                            <span class="zona__titulo">Relatórios do Linx</span>
+                            <span class="zona__dica"><span class="dica-ponteiro">Arraste os arquivos ou <u>escolha no computador</u></span><span class="dica-toque"><u>Toque para escolher os arquivos</u></span></span>
+                        </label>
+                        <ul class="arquivos" id="lista-linx"></ul>
+                    </div>
+                    <div class="aviso aviso--atencao" id="consumos-aviso" role="status" aria-live="polite" hidden></div>
+                    <button class="btn btn--primario btn--largo" id="btn-process" type="button" disabled>Processar fechamento</button>
+                </section>
+
+                <!-- Etapa 3: pendências -->
+                <section class="cartao" id="etapa-pendencias" aria-labelledby="titulo-pendencias" hidden>
+                    <p class="cartao__rotulo">Etapa 3</p>
+                    <h2 id="titulo-pendencias">Pendências <span class="contador" id="pendencias-contador"></span></h2>
+                    <p class="cartao__texto">Funcionários que aparecem no Linx sem cadastro ou sem empresa. Resolva ou ignore cada um para liberar a planilha; o que for salvo aqui também entra na base.</p>
+                    <div class="pendencias" id="lista-pendencias"></div>
+                    <datalist id="lista-empresas"></datalist>
+                </section>
+
+                <!-- Etapa 4: planilha -->
+                <section class="cartao cartao--resultado" id="etapa-resultado" aria-labelledby="resultado-titulo" hidden>
+                    <p class="cartao__rotulo">Etapa 4</p>
+                    <h2 id="resultado-titulo" tabindex="-1">Fechamento pronto</h2>
+                    <p class="cartao__texto" id="resultado-subtitulo"></p>
+                    <dl class="numeros" id="resultado-numeros"></dl>
+                    <div class="tabela-rolagem" id="resultado-tabela"></div>
+                    <p class="nota" id="resultado-ignorados" hidden></p>
+                    <div class="acoes acoes--resultado">
+                        <button class="btn btn--primario" id="btn-download" type="button">
+                            <svg class="ic" aria-hidden="true"><use href="#i-baixar"/></svg> Baixar Excel
+                        </button>
+                        <button class="btn btn--secundario" id="btn-csv" type="button">
+                            <svg class="ic" aria-hidden="true"><use href="#i-tabela"/></svg> CSV
+                        </button>
+                        <button class="btn btn--secundario" id="btn-imprimir" type="button">
+                            <svg class="ic" aria-hidden="true"><use href="#i-imprimir"/></svg> Imprimir ou PDF
+                        </button>
+                        <button class="btn btn--fantasma" id="btn-reset" type="button">
+                            <svg class="ic" aria-hidden="true"><use href="#i-recomecar"/></svg> Novo fechamento
+                        </button>
+                    </div>
+                    <div class="aviso" id="resultado-aviso" role="status" aria-live="polite" hidden></div>
+                </section>
+
+                <p class="privacidade"><svg class="ic" aria-hidden="true"><use href="#i-cadeado"/></svg>Os arquivos são lidos neste navegador e não vão para nenhum servidor.</p>
+            </main>
+
+            <footer class="page-footer page-footer--movel" aria-label="AFN Systems, UnifyData">
+                <div class="pf-marca"><span class="pf-afn">AFN</span><span class="pf-gap"></span><span class="pf-sys">SYSTEMS</span></div>
+                <span class="pf-pipe" aria-hidden="true">|</span>
+                <span class="pf-info">UnifyData</span>
+            </footer>
         </div>
     </div>
-    
-    <div class="footer">POWERED BY AFN SYSTEMS</div>
-    
-    <script src="script.js"></script>
+
+    <section class="relatorio" id="relatorio" aria-hidden="true"></section>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="js/nucleo.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
