@@ -216,6 +216,7 @@ node --test
 ```
 index.html            the page: sidebar, the four steps and the report
 404.html              page for addresses that do not exist
+CHANGELOG.md          what changed in each version
 favicon.svg           the UnifyData mark (apple-touch-icon.png for iPhone)
 css/style.css         light and dark themes, phone and print
 fonts/                Instrument Sans and JetBrains Mono (woff2), with their licenses

@@ -212,6 +212,7 @@ node --test
 ```
 index.html            a página: lateral, as quatro etapas e o relatório
 404.html              página para endereços que não existem
+CHANGELOG.md          o que mudou em cada versão (em inglês)
 favicon.svg           a marca do UnifyData (apple-touch-icon.png para iPhone)
 css/style.css         temas claro e escuro, celular e impressão
 fonts/                Instrument Sans e JetBrains Mono (woff2), com as licenças
