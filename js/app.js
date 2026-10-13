@@ -174,10 +174,11 @@ function ocupado(btn, ativo, rotulo) {
     }
 }
 
+// Erro inesperado: a tela diz o que fazer e o detalhe técnico fica no console
 function mensagemDeErro(err) {
     if (err instanceof ErroUsuario) return err.message;
     console.error(err);
-    return `Algo deu errado ao ler os arquivos: ${esc(err.message)}. Confira se são os relatórios certos e tente de novo.`;
+    return 'Não foi possível ler os arquivos. Confira se são os relatórios certos (PDF de contas a receber, planilhas do RH e CSVs do Linx) e tente de novo.';
 }
 
 // ---------- Andamento das etapas (lateral) ----------
