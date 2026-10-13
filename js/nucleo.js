@@ -244,6 +244,27 @@
             .map(g => ({ ...g, linhas: g.linhas.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')) }));
     }
 
+    // Conferência com o Linx, como numa fita de calculadora: o consumo de cada loja (com quem foi ignorado),
+    // a soma, o que ficou de fora e o que vai para a folha. Fecha com o "Total geral" do relatório do Linx.
+    function conferencia(prontos, ignoradas, origens) {
+        const centavos = v => Math.round(v * 100) / 100;
+        const porOrigem = origens.map(origem => ({
+            origem,
+            total: centavos([...prontos, ...ignoradas].reduce((s, r) => s + consumoDe(r.consumos, origem).total, 0))
+        }));
+        const consumo = centavos(porOrigem.reduce((s, o) => s + o.total, 0));
+        const ignorado = centavos(ignoradas.reduce((s, p) => s + origens.reduce((t, o) => t + consumoDe(p.consumos, o).total, 0), 0));
+        return { porOrigem, consumo, ignorado, aDescontar: centavos(consumo - ignorado) };
+    }
+
+    // "01/09/2026 a 30/09/2026" → "setembro de 2026"; vencimentos em mais de um mês ficam como vieram
+    function mesDoPeriodo(periodo) {
+        const meses = new Set(Array.from(String(periodo || '').matchAll(/\d{2}\/(\d{2})\/(\d{4})/g), m => `${m[2]}-${m[1]}`));
+        if (meses.size !== 1) return periodo || '';
+        const [ano, mes] = [...meses][0].split('-').map(Number);
+        return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes - 1, 1));
+    }
+
     // ---------- Exportação ----------
     // Excel não aceita \ / ? * [ ] : em nome de aba, nem apóstrofo nas pontas, nem "History"
     // Corta no limite sem deixar palavra pela metade nem espaço, hífen ou apóstrofo no fim
@@ -319,6 +340,6 @@
     return {
         SEM_EMPRESA, normalizar, somenteDigitos, formatarCPF, escaparHtml, nomeExibicao, formatarMoeda, listaPorExtenso,
         lerCSV, empresaDoArquivo, extrairRH, extrairPessoasPdf, atualizarBase, empresasDaBase,
-        lerRelatorioLinx, cruzar, consumoDe, agruparPorEmpresa, nomeDeAba, letraColuna, cabecalhoPlanilha, nomeDoArquivo, gerarCSV
+        lerRelatorioLinx, cruzar, consumoDe, agruparPorEmpresa, conferencia, mesDoPeriodo, nomeDeAba, letraColuna, cabecalhoPlanilha, nomeDoArquivo, gerarCSV
     };
 });

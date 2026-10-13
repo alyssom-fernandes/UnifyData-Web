@@ -37,6 +37,7 @@
     --sup: #1a1a1d;
     --sup-2: #222226;
     --sup-3: #2c2c32;
+    --papel: #232327;
     --campo: #141416;
     --borda: #2a2a30;
     --borda-2: #3a3a42;
@@ -69,6 +70,7 @@
     --sup: #ffffff;
     --sup-2: #f0f0f2;
     --sup-3: #e6e6ea;
+    --papel: #f2f2f4;
     --campo: #ffffff;
     --borda: #e5e5e9;
     --borda-2: #d1d1d8;
@@ -151,10 +153,6 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .marca__b { stroke: var(--acento); }
 .marca__c { fill: var(--acento); }
 
-.lateral__rotulo {
-    padding: 0 10px 10px;
-    font: 700 10.5px/1 var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--texto-3);
-}
 .passos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .passo {
     position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: center;
@@ -255,8 +253,12 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
     background: var(--sup); border: 1px solid var(--borda); border-radius: 14px; box-shadow: var(--sombra);
 }
 .cartao__cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.cartao__rotulo { margin-bottom: 8px; font: 700 10.5px/1 var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--texto-3); }
-.cartao h2 { font-size: 20px; font-weight: 650; letter-spacing: -.02em; line-height: 1.25; }
+.cartao h2 { display: flex; align-items: center; flex-wrap: wrap; font-size: 20px; font-weight: 650; letter-spacing: -.02em; line-height: 1.25; }
+/* O número da etapa entra no título, no mesmo círculo da lateral */
+.cartao__num {
+    width: 28px; height: 28px; display: inline-grid; place-items: center; flex: none; margin-right: 12px; border-radius: 50%;
+    border: 1px solid var(--borda-2); font: 700 12px/1 var(--mono); letter-spacing: 0; color: var(--texto-2);
+}
 .cartao__resumo { margin-top: 4px; color: var(--texto-2); font-size: 14.5px; }
 .cartao__resumo b { color: var(--texto); font-weight: 600; font-variant-numeric: tabular-nums; }
 .cartao__resumo.carregando::before {
@@ -397,16 +399,44 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .campo input[list]::-webkit-calendar-picker-indicator { opacity: 0; cursor: pointer; }
 
 /* ── 10. Resultado ──────────────────────────────────────────────────────── */
-.numeros { display: grid; grid-template-columns: 1fr 1fr 1.4fr; margin-top: 20px; border: 1px solid var(--borda); border-radius: 12px; overflow: hidden; }
-.numero { min-width: 0; padding: 14px 18px; }
-.numero + .numero { border-left: 1px solid var(--borda); }
-.numero dt { font-size: 13px; color: var(--texto-2); }
-.numero dd { margin-top: 2px; font-size: 24px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.numero--destaque { background: var(--acento-fundo); }
-.numero--destaque dt { color: var(--acento); font-weight: 600; }
-.numero--destaque dd { font-size: 28px; }
+/* Fita de conferência ao lado da tabela; empilhada quando o cartão é estreito */
+.cartao--resultado { container: resultado / inline-size; }
+.resultado-grade { display: grid; gap: 22px; margin-top: 22px; }
+@container resultado (min-width: 700px) {
+    .resultado-grade { grid-template-columns: 280px minmax(0, 1fr); gap: 28px; align-items: start; }
+}
 
-.tabela-rolagem { margin-top: 18px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* A conta do fechamento como numa calculadora de fita: papel, números alinhados e a ponta serrilhada */
+.fita {
+    --dente: 6px;
+    padding: 16px 18px calc(16px + var(--dente));
+    border-radius: 10px 10px 0 0; background: var(--papel); color: var(--texto-2);
+    font: 500 13px/1.5 var(--mono); font-variant-numeric: tabular-nums;
+    -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--dente)) 100%;
+            mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--dente)) 100%;
+}
+.fita__titulo { color: var(--texto); font: 600 14px/1.3 var(--fonte); }
+.fita__mes { margin-top: 1px; color: var(--texto-3); font: 400 12.5px/1.4 var(--fonte); }
+.fita dl { margin: 12px 0 0; }
+.fita__linha { display: flex; align-items: baseline; gap: 4px; padding: 2px 0; }
+/* Rótulos na fonte da interface (cabem nomes de loja longos); os números ficam na mono, alinhados */
+.fita__linha dt { display: flex; flex: 1; min-width: 0; align-items: baseline; font: 500 13.5px/1.5 var(--fonte); }
+.fita__linha dt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fita__linha dt::after { content: ''; flex: 1; min-width: 10px; margin: 0 6px; border-bottom: 1px dotted var(--borda-campo); transform: translateY(-4px); }
+.fita__linha dd { color: var(--texto); white-space: nowrap; }
+.fita__op { display: inline-block; width: 2ch; font-style: normal; text-align: right; color: var(--texto-3); }
+.fita__soma { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--borda-2); }
+.fita__soma dt span, .fita__soma dd { font-weight: 700; }
+.fita__menos dd { color: var(--atencao); }
+.fita__total {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px;
+    margin-top: 10px; padding-top: 10px; border-top: 3px double var(--texto-3); color: var(--acento);
+}
+.fita__total dt { font: 600 14px/1.3 var(--fonte); }
+.fita__total dd { font: 700 23px/1.15 var(--mono); letter-spacing: -.03em; white-space: nowrap; }
+.fita__pe { margin-top: 12px; color: var(--texto-3); font: 400 12.5px/1.4 var(--fonte); }
+
+.tabela-rolagem { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .tabela-rolagem:empty { display: none; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabela th { padding: 8px 10px; border-bottom: 1px solid var(--borda-2); color: var(--texto-2); font-size: 12.5px; font-weight: 600; text-align: left; white-space: nowrap; }
@@ -446,7 +476,10 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .toast.visivel { transform: none; opacity: 1; }
 @media (min-width: 1024px) { .toasts { left: auto; right: 24px; width: 360px; align-items: flex-end; } }
 
-/* ── 13. Telas menores ──────────────────────────────────────────────────── */
+/* ── 13. Telas maiores e menores ────────────────────────────────────────── */
+/* Monitor largo: a coluna cresce, e a tabela do resultado cabe ao lado da fita sem apertar */
+@media (min-width: 1360px) { :root { --coluna: 960px; } }
+
 @media (max-width: 1279px) {
     .tabela--varias .col-origem { display: none; }
 }
@@ -481,8 +514,6 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
     .pendencia__botoes { order: 2; }
     .pendencia__botoes .btn { flex: 1; }
     .pendencia__erro { order: 1; }
-    .numeros { grid-template-columns: 1fr 1fr; }
-    .numero--destaque { grid-column: 1 / -1; border-left: 0 !important; border-top: 1px solid var(--borda); }
     .tabela .col-origem { display: none; }
     .acoes--resultado .btn { flex: 1 1 auto; }
     .acoes--resultado #btn-download { flex-basis: 100%; }
@@ -538,6 +569,7 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .relatorio__resumo { display: flex; gap: 22pt; margin-bottom: 14pt; }
 .relatorio__resumo span { display: block; color: #555; font-size: 8.5pt; }
 .relatorio__resumo b { font-size: 12pt; font-variant-numeric: tabular-nums; }
+.relatorio__total b { color: #0d6e66; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 /* A empresa que cabe numa página não se divide; o total aparece uma vez só, no fim da tabela */
 .relatorio__empresa { margin-bottom: 14pt; break-inside: avoid; }
 .relatorio__empresa h2 { margin-bottom: 5pt; font-size: 11pt; break-after: avoid; }
@@ -545,7 +577,7 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .relatorio tr { break-inside: avoid; }
 .relatorio tfoot { display: table-row-group; }
 .relatorio th {
-    padding: 4pt 5pt; background: #58111a; color: #fff; font-size: 8.5pt; font-weight: 600; text-align: left; vertical-align: bottom;
+    padding: 4pt 5pt; background: #0d6e66; color: #fff; font-size: 8.5pt; font-weight: 600; text-align: left; vertical-align: bottom;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .relatorio td { padding: 3.5pt 5pt; border-bottom: .5pt solid #ccc; }

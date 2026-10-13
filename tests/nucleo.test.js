@@ -101,6 +101,24 @@ test('cruzamento: pronto, sem cadastro e sem empresa, somando as lojas', () => {
     assert.equal(N.consumoDe(grupo.porOrigem, 'LOJA').vencido, 5);
 });
 
+test('conferência: consumo de cada loja no Linx, menos o ignorado, é o que vai para a folha', () => {
+    const consumos = [...N.lerRelatorioLinx(exemplo('LOJA.csv'), 'LOJA').registros, ...N.lerRelatorioLinx(exemplo('RESTAURANTE.csv'), 'RESTAURANTE').registros];
+    const { prontos, pendencias } = N.cruzar(consumos, {});
+    // Sem base, todo mundo é pendência: metade vai para a folha e metade é ignorada
+    const prontas = pendencias.slice(0, 10).map(p => ({ nome: p.nomeLinx, cpf: '', empresa: 'Posto', consumos: p.consumos }));
+    const ignoradas = pendencias.slice(10);
+    const c = N.conferencia([...prontos, ...prontas], ignoradas, ['LOJA', 'RESTAURANTE']);
+    const totalLinx = o => N.lerRelatorioLinx(exemplo(`${o}.csv`), o).registros.reduce((s, r) => s + r.total, 0);
+    assert.deepEqual(c.porOrigem.map(o => o.origem), ['LOJA', 'RESTAURANTE']);
+    assert.equal(c.porOrigem[0].total, Math.round(totalLinx('LOJA') * 100) / 100);
+    assert.equal(c.consumo, Math.round((totalLinx('LOJA') + totalLinx('RESTAURANTE')) * 100) / 100);
+    assert.equal(c.ignorado, Math.round(ignoradas.reduce((s, p) => s + p.valor, 0) * 100) / 100);
+    const folha = N.agruparPorEmpresa(prontas, ['LOJA', 'RESTAURANTE']).reduce((s, g) => s + g.total, 0);
+    assert.equal(c.aDescontar, Math.round(folha * 100) / 100, 'consumo − ignorado = total da planilha');
+    assert.equal(N.mesDoPeriodo('01/09/2026 a 30/09/2026'), 'setembro de 2026');
+    assert.equal(N.mesDoPeriodo('16/09/2026 a 15/10/2026'), '16/09/2026 a 15/10/2026');
+});
+
 test('origem com nome de propriedade interna ("constructor.csv") não quebra a soma', () => {
     const { prontos } = N.cruzar([{ matricula: '1', nome: 'ANA', vencido: 1, total: 2, origem: 'constructor' }], { '1': { nome: 'ANA', cpf: '', empresa: 'toString' } });
     const grupos = N.agruparPorEmpresa(prontos, ['constructor', 'valueOf']);

@@ -59,7 +59,6 @@
                 <span class="marca__nome">UnifyData</span>
             </div>
 
-            <p class="lateral__rotulo">Fechamento</p>
             <ol class="passos">
                 <li><a class="passo" id="passo-base" href="#etapa-base">
                     <span class="passo__num">1</span>
@@ -109,7 +108,7 @@
             </header>
 
             <div class="faixa" id="faixa-demo">
-                <span><b>Demonstração</b><span class="faixa__longo"> · arquivos fictícios, nada é salvo neste navegador.</span><span class="faixa__curto"> · nada é salvo</span></span>
+                <span><b>Demonstração</b><span class="faixa__longo"> com arquivos fictícios: nada é salvo neste navegador.</span><span class="faixa__curto">: nada é salvo</span></span>
                 <a href="./" id="sair-demo">Sair<span class="faixa__longo"> da demonstração</span></a>
             </div>
 
@@ -129,8 +128,7 @@
                 <section class="cartao" id="etapa-base" aria-labelledby="titulo-base">
                     <div class="cartao__cab">
                         <div>
-                            <p class="cartao__rotulo">Etapa 1</p>
-                            <h2 id="titulo-base">Base de funcionários</h2>
+                            <h2 id="titulo-base"><span class="cartao__num" aria-hidden="true">1</span><span class="visualmente-oculto">Etapa 1: </span>Base de funcionários</h2>
                             <p class="cartao__resumo" id="base-resumo">Nenhum funcionário cadastrado ainda.</p>
                         </div>
                         <button class="btn btn--secundario" id="btn-abrir-base" type="button" aria-expanded="false" aria-controls="base-conteudo" hidden>Atualizar base</button>
@@ -167,8 +165,7 @@
 
                 <!-- Etapa 2: consumos do mês -->
                 <section class="cartao" id="etapa-consumos" aria-labelledby="titulo-consumos">
-                    <p class="cartao__rotulo">Etapa 2</p>
-                    <h2 id="titulo-consumos">Consumos do mês</h2>
+                    <h2 id="titulo-consumos"><span class="cartao__num" aria-hidden="true">2</span><span class="visualmente-oculto">Etapa 2: </span>Consumos do mês</h2>
                     <p class="cartao__texto">Relatórios <i>Pendências por responsável</i> exportados do Linx em .csv, um por loja. O nome do arquivo vira o nome da coluna na planilha.</p>
                     <div class="envio">
                         <label class="zona zona--larga" id="zona-linx">
@@ -185,8 +182,7 @@
 
                 <!-- Etapa 3: pendências -->
                 <section class="cartao" id="etapa-pendencias" aria-labelledby="titulo-pendencias" hidden>
-                    <p class="cartao__rotulo">Etapa 3</p>
-                    <h2 id="titulo-pendencias">Pendências <span class="contador" id="pendencias-contador"></span></h2>
+                    <h2 id="titulo-pendencias"><span class="cartao__num" aria-hidden="true">3</span><span class="visualmente-oculto">Etapa 3: </span>Pendências <span class="contador" id="pendencias-contador"></span></h2>
                     <p class="cartao__texto">Funcionários que aparecem no Linx sem cadastro ou sem empresa. Resolva ou ignore cada um para liberar a planilha; o que for salvo aqui também entra na base.</p>
                     <div class="pendencias" id="lista-pendencias"></div>
                     <datalist id="lista-empresas"></datalist>
@@ -194,11 +190,13 @@
 
                 <!-- Etapa 4: planilha -->
                 <section class="cartao cartao--resultado" id="etapa-resultado" aria-labelledby="resultado-titulo" hidden>
-                    <p class="cartao__rotulo">Etapa 4</p>
-                    <h2 id="resultado-titulo" tabindex="-1">Fechamento pronto</h2>
+                    <h2 id="resultado-titulo" tabindex="-1"><span class="cartao__num" aria-hidden="true">4</span><span class="visualmente-oculto">Etapa 4: </span><span id="resultado-titulo-texto">Fechamento pronto</span></h2>
                     <p class="cartao__texto" id="resultado-subtitulo"></p>
-                    <dl class="numeros" id="resultado-numeros"></dl>
-                    <div class="tabela-rolagem" id="resultado-tabela"></div>
+                    <!-- A conta do fechamento como numa fita de calculadora, ao lado da tabela por empresa -->
+                    <div class="resultado-grade">
+                        <section class="fita" id="resultado-fita" aria-label="Conferência com o Linx"></section>
+                        <div class="tabela-rolagem" id="resultado-tabela"></div>
+                    </div>
                     <p class="nota" id="resultado-ignorados" hidden></p>
                     <div class="acoes acoes--resultado">
                         <button class="btn btn--primario" id="btn-download" type="button">

@@ -206,7 +206,7 @@ function atualizarPassos() {
 
     definirPasso('base', {
         estado: total ? 'feito' : 'aberto', ativo: atual === 'base',
-        resumo: total ? `${total} ${total === 1 ? 'pessoa' : 'pessoas'} · ${empresas} ${empresas === 1 ? 'empresa' : 'empresas'}` : 'Nenhum cadastro'
+        resumo: total ? `${total} ${total === 1 ? 'pessoa' : 'pessoas'} em ${empresas} ${empresas === 1 ? 'empresa' : 'empresas'}` : 'Nenhum cadastro'
     });
     definirPasso('consumos', {
         estado: processado ? 'feito' : 'aberto', ativo: atual === 'consumos',
@@ -336,10 +336,10 @@ function renderizarBase() {
         btnAbrirBase.hidden = true;
         abrirBase(true);
     } else {
-        const partes = [`<b>${total}</b> ${total === 1 ? 'funcionário' : 'funcionários'} em <b>${empresas.length}</b> ${empresas.length === 1 ? 'empresa' : 'empresas'}`];
-        if (semEmpresa) partes.push(`${semEmpresa} sem empresa`);
-        if (baseMeta.atualizadaEm) partes.push(`atualizada em ${dataCurta(new Date(baseMeta.atualizadaEm))}`);
-        resumo.innerHTML = partes.join('&nbsp;· '); // o ponto fica colado ao trecho anterior ao quebrar a linha
+        let frase = `<b>${total}</b> ${total === 1 ? 'funcionário' : 'funcionários'} em <b>${empresas.length}</b> ${empresas.length === 1 ? 'empresa' : 'empresas'}`;
+        if (semEmpresa) frase += `, ${semEmpresa} sem empresa`;
+        if (baseMeta.atualizadaEm) frase += `. Atualizada em ${dataCurta(new Date(baseMeta.atualizadaEm))}`;
+        resumo.innerHTML = `${frase}.`;
         btnAbrirBase.hidden = false;
     }
     $('lista-empresas').innerHTML = empresas.map(e => `<option value="${esc(e)}"></option>`).join('');
@@ -676,27 +676,47 @@ listaPendencias.addEventListener('input', e => {
 });
 
 // ---------- Etapa 4: Resultado ----------
+// A fita de conferência: cada loja (+), o consumo no Linx (=), o que foi ignorado (−) e o que vai para a folha.
+// O consumo de cada loja fecha com o "Total geral" do relatório do Linx.
+const numeroFita = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function htmlFita(grupos, total) {
+    const c = N.conferencia(prontos, ignoradas, origens);
+    if (c.aDescontar !== Math.round(total * 100) / 100) console.warn('Conferência não fecha com a planilha', c, total);
+    const linha = (rotulo, valor, op, classe = '') => `
+        <div class="fita__linha${classe}"><dt><span>${esc(rotulo)}</span></dt><dd>${valor}<i class="fita__op" aria-hidden="true">${op}</i></dd></div>`;
+    const mes = N.mesDoPeriodo(periodoFechamento);
+    const n = ignoradas.length;
+    return `
+        <p class="fita__titulo">Conferência com o Linx</p>
+        ${mes ? `<p class="fita__mes">Vencimentos de ${esc(mes)}</p>` : ''}
+        <dl>
+            ${c.porOrigem.map(o => linha(o.origem, numeroFita.format(o.total), '+')).join('')}
+            ${linha('Total no Linx', numeroFita.format(c.consumo), '=', ' fita__soma')}
+            ${linha(n ? `Ignorado (${n} ${n === 1 ? 'pessoa' : 'pessoas'})` : 'Ignorado', `−${numeroFita.format(c.ignorado)}`, '', ' fita__menos')}
+            <div class="fita__total"><dt>A descontar</dt><dd>${N.formatarMoeda(total)}</dd></div>
+        </dl>
+        <p class="fita__pe">${prontos.length} ${prontos.length === 1 ? 'funcionário' : 'funcionários'} em ${grupos.length} ${grupos.length === 1 ? 'empresa' : 'empresas'}</p>`;
+}
+
 function mostrarResultado() {
     const etapa = $('etapa-resultado');
     const grupos = N.agruparPorEmpresa(prontos, origens);
     const total = grupos.reduce((s, g) => s + g.total, 0);
     const vazio = prontos.length === 0;
 
-    $('resultado-titulo').textContent = vazio ? 'Nada para exportar' : 'Fechamento pronto';
+    $('resultado-titulo-texto').textContent = vazio ? 'Nada para exportar' : 'Fechamento pronto';
     $('resultado-subtitulo').textContent = vazio
         ? 'Todas as pendências foram ignoradas, então nenhum funcionário entrou na planilha. Clique em Novo fechamento para recomeçar.'
         : `Consumos de ${N.listaPorExtenso(origens)}${periodoFechamento ? `, vencimentos de ${periodoFechamento}` : ''}, cruzados com a base de funcionários.`;
 
-    $('resultado-numeros').hidden = vazio;
+    $('resultado-fita').hidden = vazio;
     ['btn-download', 'btn-csv', 'btn-imprimir'].forEach(id => { $(id).hidden = vazio; });
     // Sem nada para exportar, recomeçar é a única ação: vira o botão principal
     $('btn-reset').className = vazio ? 'btn btn--primario' : 'btn btn--fantasma';
     esconderAviso($('resultado-aviso'));
 
-    $('resultado-numeros').innerHTML = `
-        <div class="numero"><dt>Funcionários</dt><dd>${prontos.length}</dd></div>
-        <div class="numero"><dt>Empresas</dt><dd>${grupos.length}</dd></div>
-        <div class="numero numero--destaque"><dt>Total a descontar</dt><dd>${N.formatarMoeda(total)}</dd></div>`;
+    $('resultado-fita').innerHTML = vazio ? '' : htmlFita(grupos, total);
 
     $('resultado-tabela').innerHTML = vazio ? '' : `
         <table class="tabela${origens.length >= 3 ? ' tabela--varias' : ''}">
@@ -745,7 +765,7 @@ async function gerarExcel() {
     workbook.created = new Date();
     if (modoDemo) workbook.subject = AVISO_DEMO;
 
-    const headerFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF58111A' } };
+    const headerFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D6E66' } }; // verde-azulado da marca, como na tela
     const headerFont  = { color: { argb: 'FFFFFFFF' }, bold: true };
     const grayFont    = { color: { argb: 'FF808080' } };
     const centerAlign = { vertical: 'middle', horizontal: 'center' };
@@ -847,17 +867,20 @@ function montarRelatorio(grupos, total) {
     const notaIgnoradas = ignoradas.length === 0 ? 'Sem pendências ignoradas.'
         : ignoradas.length === 1 ? `1 pendência ignorada não consta neste relatório: ${esc(ignoradas[0].nomeLinx)} (${N.formatarMoeda(ignoradas[0].valor)}).`
         : `${ignoradas.length} pendências ignoradas não constam neste relatório: ${ignoradas.map(p => esc(p.nomeLinx)).join(', ')} (${N.formatarMoeda(ignoradas.reduce((s, p) => s + p.valor, 0))}).`;
+    const conferido = N.conferencia(prontos, ignoradas, origens);
 
     rel.innerHTML = `
         <div class="relatorio__cabecalho">
-            <div><h1>Fechamento de consumo</h1><p>${esc(origens.join(' · '))}${periodoFechamento ? ` · Vencimentos de ${esc(periodoFechamento)}` : ''}</p></div>
+            <div><h1>Fechamento de consumo</h1><p>${esc(N.listaPorExtenso(origens))}${periodoFechamento ? `, vencimentos de ${esc(periodoFechamento)}` : ''}</p></div>
             <div class="relatorio__meta">UnifyData<br>${dataCurta()}</div>
         </div>
         ${modoDemo ? `<p class="relatorio__demo">${AVISO_DEMO}</p><div class="relatorio__marca" aria-hidden="true">Demonstração</div>` : ''}
         <div class="relatorio__resumo">
             <div><span>Funcionários</span><b>${prontos.length}</b></div>
             <div><span>Empresas</span><b>${grupos.length}</b></div>
-            <div><span>Total a descontar</span><b>${N.formatarMoeda(total)}</b></div>
+            <div><span>Total no Linx</span><b>${N.formatarMoeda(conferido.consumo)}</b></div>
+            <div><span>Ignorado</span><b>${N.formatarMoeda(conferido.ignorado)}</b></div>
+            <div class="relatorio__total"><span>Total a descontar</span><b>${N.formatarMoeda(total)}</b></div>
         </div>
         ${grupos.map(g => `
         <section class="relatorio__empresa">
@@ -875,7 +898,7 @@ function montarRelatorio(grupos, total) {
                 </tfoot>
             </table>
         </section>`).join('')}
-        <div class="relatorio__rodape"><span>Gerado pelo UnifyData em ${dataCurta()} · ${notaIgnoradas}</span><span class="relatorio__assinatura"><b>AFN</b> SYSTEMS</span></div>`;
+        <div class="relatorio__rodape"><span>Gerado pelo UnifyData em ${dataCurta()}. ${notaIgnoradas}</span><span class="relatorio__assinatura"><b>AFN</b> SYSTEMS</span></div>`;
 
     // Com muitas lojas a tabela não cabe em retrato: a página nomeada "paisagem" vira A4 deitado
     rel.classList.toggle('relatorio--paisagem', origens.length >= 3);
