@@ -73,6 +73,11 @@ Taken from the demo mode.
   numbered pages. Ignored items are listed at the bottom, so nothing
   leaves the closing silently.
 
+The files are named after the month of the due dates
+(`Fechamento_UnifyData_2026-09.xlsx`). In the demo, the name ends in
+`_DEMO`, and the Excel and the report say the data is made up, so a
+screenshot or a shared file cannot pass for a real closing.
+
 ## What it does
 
 ### Employee register
@@ -160,8 +165,10 @@ Some decisions behind it:
 - **The rules live apart from the screen.** Everything that decides a
   number is in `js/nucleo.js`, as pure functions: reading the Linx
   reports and the HR files, updating the register, matching, grouping by
-  company, sheet names and the CSV. The tests run them in Node, against
-  the same sample files as the demo.
+  company, sheet names, file names and the CSV. The tests run them in
+  Node, with the demo's sample Linx CSVs. The PDF and the HR spreadsheets
+  need PDF.js and SheetJS, so they are checked in the browser, through
+  the demo, and not in the tests.
 - **Classic scripts, not modules**, so `index.html` also works with a
   double click, straight from disk.
 - **Libraries load on demand.** Opening the page downloads nothing heavy;
@@ -197,7 +204,8 @@ python -m http.server 8000
 and then `http://localhost:8000/?demo=1`. GitHub Pages serves the folder
 as it is.
 
-To run the tests (Node 22 or newer, nothing to install):
+To run the tests (Node 22 or newer, nothing to install; CI runs them on
+22 and 24):
 
 ```bash
 node --test
@@ -208,14 +216,14 @@ node --test
 ```
 index.html            the page: sidebar, the four steps and the report
 404.html              page for addresses that do not exist
-favicon.svg           the UnifyData mark
+favicon.svg           the UnifyData mark (apple-touch-icon.png for iPhone)
 css/style.css         light and dark themes, phone and print
 fonts/                Instrument Sans and JetBrains Mono (woff2), with their licenses
 js/
   boot.js             theme before the page shows up, and the error log
   nucleo.js           pure rules: parsing, register, matching, sheets, CSV
   app.js              screen, uploads, pending items and the exports
-tests/                tests for the rules, with the sample files
+tests/                tests for the rules, with the sample Linx CSVs
 exemplos/             made-up files in the Linx and HR formats
 .github/workflows/    runs the tests on every push
 docs/telas/           images for this README and the link preview (og.png)

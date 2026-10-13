@@ -70,6 +70,11 @@ Tiradas do modo de demonstração.
   numeradas. As pendências ignoradas aparecem no rodapé, para nada sair do
   fechamento em silêncio.
 
+Os arquivos levam o mês dos vencimentos no nome
+(`Fechamento_UnifyData_2026-09.xlsx`). Na demonstração, o nome termina em
+`_DEMO`, e o Excel e o relatório avisam que os dados são fictícios, para
+um print ou arquivo compartilhado não passar por um fechamento real.
+
 ## O que faz
 
 ### Base de funcionários
@@ -157,8 +162,10 @@ Algumas decisões por trás:
 - **As regras ficam separadas da tela.** Tudo o que decide um número está
   em `js/nucleo.js`, em funções puras: leitura dos relatórios do Linx e
   dos arquivos do RH, atualização da base, cruzamento, agrupamento por
-  empresa, nomes de aba e CSV. Os testes rodam essas funções no Node, com
-  os mesmos arquivos de exemplo da demonstração.
+  empresa, nomes de aba, nome do arquivo e CSV. Os testes rodam essas
+  funções no Node, com os CSVs do Linx usados na demonstração. O PDF e as
+  planilhas do RH dependem do PDF.js e do SheetJS, então são conferidos no
+  navegador, pela demonstração, e não nos testes.
 - **Scripts clássicos, não módulos**, para o `index.html` funcionar também
   com dois cliques, direto do disco.
 - **Bibliotecas sob demanda.** Abrir a página não baixa nada pesado; o
@@ -193,7 +200,8 @@ python -m http.server 8000
 e depois `http://localhost:8000/?demo=1`. O GitHub Pages serve a pasta
 como está.
 
-Para rodar os testes (Node 22 ou mais novo, nada para instalar):
+Para rodar os testes (Node 22 ou mais novo, nada para instalar; o CI roda
+no 22 e no 24):
 
 ```bash
 node --test
@@ -204,14 +212,14 @@ node --test
 ```
 index.html            a página: lateral, as quatro etapas e o relatório
 404.html              página para endereços que não existem
-favicon.svg           a marca do UnifyData
+favicon.svg           a marca do UnifyData (apple-touch-icon.png para iPhone)
 css/style.css         temas claro e escuro, celular e impressão
 fonts/                Instrument Sans e JetBrains Mono (woff2), com as licenças
 js/
   boot.js             tema antes da página aparecer, e o registro de erros
   nucleo.js           regras puras: leitura, base, cruzamento, abas, CSV
   app.js              tela, envios, pendências e exportações
-tests/                testes das regras, com os arquivos de exemplo
+tests/                testes das regras, com os CSVs de exemplo do Linx
 exemplos/             arquivos fictícios nos formatos do Linx e do RH
 .github/workflows/    roda os testes a cada push
 docs/telas/           imagens deste README e da prévia de link (og.png)
