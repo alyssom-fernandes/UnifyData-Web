@@ -765,8 +765,8 @@ async function gerarExcel() {
     workbook.created = new Date();
     if (modoDemo) workbook.subject = AVISO_DEMO;
 
-    const headerFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D6E66' } }; // verde-azulado da marca, como na tela
-    const headerFont  = { color: { argb: 'FFFFFFFF' }, bold: true };
+    const headerFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3FCFB9' } }; // a cor principal do site, como no relatório
+    const headerFont  = { color: { argb: 'FF141416' }, bold: true };
     const grayFont    = { color: { argb: 'FF808080' } };
     const centerAlign = { vertical: 'middle', horizontal: 'center' };
     const currency    = '"R$" #,##0.00';

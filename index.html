@@ -51,6 +51,12 @@
 
     <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
+    <!-- Demonstração: faixa no topo da página, acima da lateral e da barra (só aparece com ?demo) -->
+    <div class="faixa" id="faixa-demo" role="region" aria-label="Demonstração">
+        <span class="faixa__texto"><b>Demonstração</b><span class="faixa__longo"> com arquivos fictícios: nada é salvo neste navegador.</span><span class="faixa__curto">: nada é salvo</span></span>
+        <a class="faixa__sair" href="./" id="sair-demo">Sair<span class="faixa__longo"> da demonstração</span></a>
+    </div>
+
     <div class="app">
         <!-- Lateral: marca, andamento das etapas, tema e assinatura -->
         <aside class="lateral" aria-label="Andamento do fechamento">
@@ -106,11 +112,6 @@
                     <svg class="ic ic--sol" aria-hidden="true"><use href="#i-sol"/></svg>
                 </button>
             </header>
-
-            <div class="faixa" id="faixa-demo">
-                <span><b>Demonstração</b><span class="faixa__longo"> com arquivos fictícios: nada é salvo neste navegador.</span><span class="faixa__curto">: nada é salvo</span></span>
-                <a href="./" id="sair-demo">Sair<span class="faixa__longo"> da demonstração</span></a>
-            </div>
 
             <main class="conteudo" id="conteudo" tabindex="-1">
                 <section class="abertura">

@@ -26,6 +26,7 @@
     --lateral: 272px;
     --coluna: 840px;
     --barra-h: 56px;
+    --faixa-h: 0px;   /* altura da faixa da demonstração; 0 fora dela */
     --dur: .16s;
 }
 
@@ -49,6 +50,7 @@
     --tinta-hover: #ffffff;
     --sobre-tinta: #141416;
     --acento: #3fcfb9;
+    --sobre-acento: #141416;
     --acento-fundo: rgba(63, 207, 185, .12);
     --anel: rgba(63, 207, 185, .32);
     --ok: #52d69a;       --ok-fundo: rgba(82, 214, 154, .12);
@@ -82,6 +84,7 @@
     --tinta-hover: #34343a;
     --sobre-tinta: #ffffff;
     --acento: #0d6e66;
+    --sobre-acento: #ffffff;
     --acento-fundo: rgba(13, 110, 102, .09);
     --anel: rgba(13, 110, 102, .28);
     --ok: #13804f;       --ok-fundo: #e8f6ee;
@@ -98,7 +101,7 @@
 
 /* ── 2. Base ────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--barra-h) + 16px); }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--faixa-h) + var(--barra-h) + 16px); }
 body {
     margin: 0;
     font: 400 15px/1.55 var(--fonte);
@@ -136,10 +139,10 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .pular:focus { top: 12px; }
 
 /* ── 3. Estrutura e lateral ─────────────────────────────────────────────── */
-.app { display: grid; grid-template-columns: var(--lateral) minmax(0, 1fr); min-height: 100vh; }
+.app { display: grid; grid-template-columns: var(--lateral) minmax(0, 1fr); min-height: calc(100vh - var(--faixa-h)); }
 
 .lateral {
-    position: sticky; top: 0; height: 100vh;
+    position: sticky; top: var(--faixa-h); height: calc(100vh - var(--faixa-h));
     display: flex; flex-direction: column;
     padding: 18px 14px 0;
     background: var(--fundo-2); border-right: 1px solid var(--borda);
@@ -200,7 +203,7 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
 /* ── 4. Barra e faixa ───────────────────────────────────────────────────── */
 .barra {
-    position: sticky; top: 0; z-index: 5;
+    position: sticky; top: var(--faixa-h); z-index: 5;
     height: var(--barra-h); display: flex; align-items: center; gap: 14px; padding: 0 28px;
     border-bottom: 1px solid var(--borda);
     background: color-mix(in srgb, var(--fundo) 95%, transparent);
@@ -221,22 +224,31 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 :root[data-tema="claro"] .ic--sol,
 :root[data-tema="escuro"] .ic--lua { display: none; }
 
-/* Só na demonstração (o boot.js marca a página antes do primeiro quadro) */
+/* Demonstração: faixa no topo da página inteira, acima da lateral e da barra, na cor da marca
+   (o boot.js marca a página antes do primeiro quadro; a lateral e a barra descem a altura dela) */
 .faixa { display: none; }
+:root[data-demo] { --faixa-h: 40px; }
 :root[data-demo] .faixa {
-    position: sticky; top: var(--barra-h); z-index: 4;
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 14px;
-    padding: 9px 20px; border-bottom: 1px solid var(--borda);
-    background: linear-gradient(var(--acento-fundo), var(--acento-fundo)), var(--fundo);
-    color: var(--texto-2); font-size: 13.5px; text-align: center;
+    position: sticky; top: 0; z-index: 25;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    height: var(--faixa-h); padding: 0 20px;
+    background: var(--acento); color: var(--sobre-acento);
+    font-size: 13.5px; white-space: nowrap;
 }
-:root[data-demo] { scroll-padding-top: calc(var(--barra-h) + 56px); }
+.faixa__texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.faixa__curto { display: none; }
+.faixa b { font-weight: 700; }
+.faixa__sair {
+    flex: none; display: inline-block; height: 28px; padding: 0 11px; border-radius: 7px; line-height: 26px;
+    border: 1px solid color-mix(in srgb, var(--sobre-acento) 40%, transparent);
+    background: color-mix(in srgb, var(--sobre-acento) 10%, transparent);
+    color: inherit; font-weight: 600; text-decoration: none;
+}
+.faixa__sair:hover { background: color-mix(in srgb, var(--sobre-acento) 20%, transparent); }
+.faixa__sair:focus-visible { outline-color: var(--sobre-acento); }
 /* O conteúdo da demonstração aparece já no lugar; se o app.js falhar, aparece assim mesmo depois de 3 s */
 :root[data-demo="carregando"] .conteudo { visibility: hidden; animation: revelar 0s 3s forwards; }
 @keyframes revelar { to { visibility: visible; } }
-.faixa__curto { display: none; }
-.faixa b { color: var(--texto); font-weight: 600; }
-.faixa a { color: var(--texto); font-weight: 600; text-underline-offset: 3px; }
 
 /* ── 5. Abertura e cartões ──────────────────────────────────────────────── */
 .conteudo { width: 100%; max-width: calc(var(--coluna) + 64px); margin: 0 auto; padding: 44px 32px 40px; flex: 1; }
@@ -495,8 +507,8 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
 @media (max-width: 720px) {
     .barra { padding: 0 16px; }
-    /* No celular a faixa da demonstração cabe numa linha */
-    :root[data-demo] .faixa { flex-wrap: nowrap; justify-content: space-between; padding: 8px 16px; font-size: 13px; }
+    /* No celular a faixa da demonstração cabe numa linha: o aviso curto à esquerda, Sair à direita */
+    :root[data-demo] .faixa { justify-content: space-between; padding: 0 12px 0 16px; font-size: 13px; }
     .faixa__longo { display: none; }
     .faixa__curto { display: inline; }
     .conteudo { padding: 28px 16px 32px; }
@@ -569,7 +581,8 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .relatorio__resumo { display: flex; gap: 22pt; margin-bottom: 14pt; }
 .relatorio__resumo span { display: block; color: #555; font-size: 8.5pt; }
 .relatorio__resumo b { font-size: 12pt; font-variant-numeric: tabular-nums; }
-.relatorio__total b { color: #0d6e66; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* Destaque no mesmo tom da cor principal do site (#3fcfb9, a do logotipo), com texto escuro para ser legível no papel */
+.relatorio__total b { padding: 0 4pt; border-radius: 2pt; background: #3fcfb9; color: #141416; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 /* A empresa que cabe numa página não se divide; o total aparece uma vez só, no fim da tabela */
 .relatorio__empresa { margin-bottom: 14pt; break-inside: avoid; }
 .relatorio__empresa h2 { margin-bottom: 5pt; font-size: 11pt; break-after: avoid; }
@@ -577,7 +590,7 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .relatorio tr { break-inside: avoid; }
 .relatorio tfoot { display: table-row-group; }
 .relatorio th {
-    padding: 4pt 5pt; background: #0d6e66; color: #fff; font-size: 8.5pt; font-weight: 600; text-align: left; vertical-align: bottom;
+    padding: 4pt 5pt; background: #3fcfb9; color: #141416; font-size: 8.5pt; font-weight: 600; text-align: left; vertical-align: bottom;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .relatorio td { padding: 3.5pt 5pt; border-bottom: .5pt solid #ccc; }
@@ -586,9 +599,9 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .relatorio--paisagem th.pessoa { width: auto; }
 .relatorio th.cpf { width: 27mm; }
 /* Loja em cima, Vencido | Total embaixo, com um fio separando as lojas */
-.relatorio th.loja { text-align: center; padding-bottom: 2pt; border-bottom: .5pt solid rgba(255, 255, 255, .35); border-left: .5pt solid rgba(255, 255, 255, .2); }
+.relatorio th.loja { text-align: center; padding-bottom: 2pt; border-bottom: .5pt solid rgba(20, 20, 22, .3); border-left: .5pt solid rgba(20, 20, 22, .2); }
 .relatorio th.sub { padding-top: 2pt; font-size: 8pt; font-weight: 500; }
-.relatorio th.ini { border-left: .5pt solid rgba(255, 255, 255, .2); }
+.relatorio th.ini { border-left: .5pt solid rgba(20, 20, 22, .2); }
 .relatorio td.ini { border-left: .5pt solid #e2e2e2; }
 .relatorio td:first-child { min-width: 56mm; }
 .relatorio td:nth-child(2), .relatorio td.num { white-space: nowrap; }
