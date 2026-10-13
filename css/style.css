@@ -414,7 +414,7 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 /* Fita de conferência ao lado da tabela; empilhada quando o cartão é estreito */
 .cartao--resultado { container: resultado / inline-size; }
 .resultado-grade { display: grid; gap: 22px; margin-top: 22px; }
-@container resultado (min-width: 700px) {
+@container resultado (min-width: 860px) {
     .resultado-grade { grid-template-columns: 280px minmax(0, 1fr); gap: 28px; align-items: start; }
 }
 
@@ -490,7 +490,7 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
 /* ── 13. Telas maiores e menores ────────────────────────────────────────── */
 /* Monitor largo: a coluna cresce, e a tabela do resultado cabe ao lado da fita sem apertar */
-@media (min-width: 1360px) { :root { --coluna: 960px; } }
+@media (min-width: 1200px) { :root { --coluna: 960px; } }
 
 @media (max-width: 1279px) {
     .tabela--varias .col-origem { display: none; }
