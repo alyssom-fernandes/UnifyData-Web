@@ -148,17 +148,20 @@ function mostrarAviso(el, tipo, html) {
 }
 function esconderAviso(el) { el.hidden = true; el.innerHTML = ''; }
 
-let toastTimer;
+// Avisos empilhados (no máximo três), no canto do computador; no celular, mais curtos
 function toast(mensagem) {
-    const el = $('toast');
+    const pilha = $('toasts');
+    const el = document.createElement('div');
+    el.className = 'toast';
     el.textContent = mensagem;
-    el.hidden = false;
+    pilha.append(el);
+    while (pilha.children.length > 3) pilha.firstElementChild.remove();
     requestAnimationFrame(() => el.classList.add('visivel'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
+    const duracao = window.matchMedia('(max-width: 720px)').matches ? 2600 : 3200;
+    setTimeout(() => {
         el.classList.remove('visivel');
-        toastTimer = setTimeout(() => { el.hidden = true; }, 250);
-    }, 3200);
+        setTimeout(() => el.remove(), 250);
+    }, duracao);
 }
 
 function ocupado(btn, ativo, rotulo) {
@@ -330,6 +333,7 @@ function renderizarBase() {
     const empresas = N.empresasDaBase(employeeDB);
     const semEmpresa = Object.values(employeeDB).filter(e => e.empresa === N.SEM_EMPRESA).length;
     const resumo = $('base-resumo');
+    resumo.classList.remove('carregando');
 
     if (!total) {
         resumo.textContent = 'Nenhum funcionário cadastrado ainda.';
@@ -387,6 +391,9 @@ async function salvarArquivosNaBase({ silencioso = false } = {}) {
     ocupado(btnAtualizarBase, true, 'Lendo arquivos…');
     const antes = Object.keys(employeeDB).length;
     const avisos = [];
+    // As duas bibliotecas baixam juntas, não uma depois da outra (os erros aparecem na leitura de cada arquivo)
+    if (envioPdf.arquivos.length) carregarBiblioteca('pdfjs').catch(() => {});
+    if (envioRh.arquivos.some(f => !/\.csv$/i.test(f.name))) carregarBiblioteca('xlsx').catch(() => {});
 
     try {
         const registrosRH = [];
@@ -590,6 +597,7 @@ function renderizarPendencias() {
     etapaPendencias.scrollIntoView({ behavior: rolagem(), block: 'start' });
 }
 
+// Devolve true quando era a última pendência e a planilha apareceu (ela mesma mostra o que mudou)
 function retirarPendencia(id, artigo) {
     pendencias = pendencias.filter(d => d.id !== id);
     const proximo = artigo.nextElementSibling || artigo.previousElementSibling;
@@ -598,10 +606,11 @@ function retirarPendencia(id, artigo) {
     if (!pendencias.length) {
         etapaPendencias.hidden = true;
         mostrarResultado();
-    } else {
-        atualizarPassos();
-        proximo?.querySelector('input')?.focus({ preventScroll: true });
+        return true;
     }
+    atualizarPassos();
+    proximo?.querySelector('input')?.focus({ preventScroll: true });
+    return false;
 }
 
 function erroPendencia(artigo, campo, mensagem) {
@@ -636,8 +645,7 @@ function resolverPendencia(artigo) {
     try { salvarBase(); } catch (err) { toast(err.message); }
     renderizarBase();
     prontos.push({ nome: p.nomeLinx, cpf, empresa, consumos: p.consumos });
-    retirarPendencia(p.id, artigo);
-    toast(`${N.nomeExibicao(p.nomeLinx)} → ${empresa}`);
+    if (!retirarPendencia(p.id, artigo)) toast(`${N.nomeExibicao(p.nomeLinx)} → ${empresa}`);
 }
 
 listaPendencias.addEventListener('click', e => {
@@ -649,8 +657,7 @@ listaPendencias.addEventListener('click', e => {
     } else {
         const p = pendencias.find(d => d.id === artigo.dataset.id);
         ignoradas.push(p);
-        retirarPendencia(p.id, artigo);
-        toast(`${N.nomeExibicao(p.nomeLinx)} ficou fora da planilha.`);
+        if (!retirarPendencia(p.id, artigo)) toast(`${N.nomeExibicao(p.nomeLinx)} ficou fora da planilha.`);
     }
 });
 
@@ -889,21 +896,50 @@ async function buscarExemplo(nome) {
     return new File([await resposta.blob()], nome, { lastModified: Date.now() });
 }
 
+// Enquanto os exemplos chegam, a tela já fica como vai terminar (base recolhida, relatórios listados,
+// botão no lugar): nada muda de posição quando eles terminam de carregar
+function prepararDemonstracao() {
+    abrirBase(false);
+    btnAbrirBase.hidden = false;
+    btnAbrirBase.disabled = true;
+    $('base-resumo').textContent = 'Carregando a base de exemplo: o PDF de contas a receber e três planilhas do RH…';
+    $('base-resumo').classList.add('carregando');
+    ['base', 'consumos'].forEach(id => { $(`passo-${id}`).querySelector('small').textContent = 'Carregando exemplo…'; });
+    $('lista-linx').innerHTML = EXEMPLOS.linx.map(nome => `
+        <li class="arquivo arquivo--carregando">
+            <svg class="ic" aria-hidden="true"><use href="#i-arquivo"/></svg>
+            <span class="arquivo__nome">${esc(nome)}</span>
+            <span class="arquivo__tamanho">carregando</span>
+            <span class="arquivo__remover" aria-hidden="true"></span>
+        </li>`).join('');
+    ocupado(btnProcessar, true, 'Carregando os exemplos…');
+    raiz.dataset.demo = 'ativo'; // o conteúdo aparece agora, já no lugar
+}
+
 async function iniciarDemonstracao() {
-    $('faixa-demo').hidden = false;
+    prepararDemonstracao();
+    // As bibliotecas começam a baixar junto com os arquivos, não depois deles
+    ['xlsx', 'pdfjs'].forEach(chave => carregarBiblioteca(chave).catch(() => {}));
+    let pronta = false;
     try {
         const [pdf, rh, linx] = await Promise.all(['pdf', 'rh', 'linx'].map(k => Promise.all(EXEMPLOS[k].map(buscarExemplo))));
         envioPdf.definir(pdf);
         envioRh.definir(rh);
-        if (!await salvarArquivosNaBase({ silencioso: true })) return;
-        envioLinx.definir(linx);
-        toast('Base de exemplo carregada. Agora é só processar o fechamento.');
-        $('etapa-consumos').scrollIntoView({ behavior: rolagem(), block: 'start' });
-        btnProcessar.focus({ preventScroll: true });
+        pronta = await salvarArquivosNaBase({ silencioso: true });
+        if (pronta) envioLinx.definir(linx);
     } catch (err) {
         console.warn('Exemplos indisponíveis:', err);
         mostrarAviso($('exemplos-aviso'), 'atencao', 'Os arquivos de exemplo não abrem por aqui. Eles funcionam na versão publicada; '
             + 'neste computador, envie os arquivos da pasta <b>exemplos/</b> nas etapas 1 e 2.');
+    } finally {
+        btnAbrirBase.disabled = false;
+        ocupado(btnProcessar, false);
+        if (!pronta) { envioLinx.limpar(); renderizarBase(); }
+    }
+    // Sem rolar a página: o título continua à vista e o aviso aponta o próximo passo
+    if (pronta) {
+        toast('Base de exemplo carregada. Agora é só processar o fechamento.');
+        btnProcessar.focus({ preventScroll: true });
     }
 }
 

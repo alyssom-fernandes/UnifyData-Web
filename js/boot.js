@@ -10,6 +10,8 @@
         tema = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'escuro';
     }
     document.documentElement.dataset.tema = tema;
+    // Demonstração: a faixa aparece desde o primeiro quadro e o conteúdo espera o app.js montar o estado de carga
+    if (/[?&]demo(=|&|$)/.test(location.search)) document.documentElement.dataset.demo = 'carregando';
 
     const erros = [];
     window.addEventListener('error', e => {

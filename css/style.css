@@ -223,14 +223,19 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 :root[data-tema="claro"] .ic--sol,
 :root[data-tema="escuro"] .ic--lua { display: none; }
 
-.faixa {
+/* Só na demonstração (o boot.js marca a página antes do primeiro quadro) */
+.faixa { display: none; }
+:root[data-demo] .faixa {
     position: sticky; top: var(--barra-h); z-index: 4;
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 14px;
     padding: 9px 20px; border-bottom: 1px solid var(--borda);
     background: linear-gradient(var(--acento-fundo), var(--acento-fundo)), var(--fundo);
     color: var(--texto-2); font-size: 13.5px; text-align: center;
 }
-html:has(.faixa:not([hidden])) { scroll-padding-top: calc(var(--barra-h) + 56px); }
+:root[data-demo] { scroll-padding-top: calc(var(--barra-h) + 56px); }
+/* O conteúdo da demonstração aparece já no lugar; se o app.js falhar, aparece assim mesmo depois de 3 s */
+:root[data-demo="carregando"] .conteudo { visibility: hidden; animation: revelar 0s 3s forwards; }
+@keyframes revelar { to { visibility: visible; } }
 .faixa__curto { display: none; }
 .faixa b { color: var(--texto); font-weight: 600; }
 .faixa a { color: var(--texto); font-weight: 600; text-underline-offset: 3px; }
@@ -254,6 +259,10 @@ html:has(.faixa:not([hidden])) { scroll-padding-top: calc(var(--barra-h) + 56px)
 .cartao h2 { font-size: 20px; font-weight: 650; letter-spacing: -.02em; line-height: 1.25; }
 .cartao__resumo { margin-top: 4px; color: var(--texto-2); font-size: 14.5px; }
 .cartao__resumo b { color: var(--texto); font-weight: 600; font-variant-numeric: tabular-nums; }
+.cartao__resumo.carregando::before {
+    content: ''; display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px;
+    border: 2px solid var(--acento); border-right-color: transparent; border-radius: 50%; animation: girar .7s linear infinite;
+}
 .cartao__texto { margin-top: 6px; max-width: 66ch; color: var(--texto-2); font-size: 14.5px; }
 .cartao__conteudo { margin-top: 18px; }
 .cartao__conteudo > .cartao__texto { margin: 0 0 16px; }
@@ -313,6 +322,10 @@ html:has(.faixa:not([hidden])) { scroll-padding-top: calc(var(--barra-h) + 56px)
 }
 .arquivo__remover:hover { background: var(--sup-2); color: var(--texto); }
 .arquivo__remover .ic { width: 16px; height: 16px; }
+/* Exemplo ainda chegando: mesmo tamanho da linha pronta, só mais apagado */
+.arquivo--carregando { color: var(--texto-3); pointer-events: none; }
+.arquivo--carregando .arquivo__tamanho { animation: pulsar 1.2s ease-in-out infinite alternate; }
+@keyframes pulsar { from { opacity: 1; } to { opacity: .35; } }
 
 /* ── 7. Botões ──────────────────────────────────────────────────────────── */
 .acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
@@ -419,15 +432,19 @@ html:has(.faixa:not([hidden])) { scroll-padding-top: calc(var(--barra-h) + 56px)
 .pf-info { font-size: 11px; letter-spacing: .3px; color: var(--pf-sys); }
 
 /* ── 12. Toast ──────────────────────────────────────────────────────────── */
-.toast {
+/* Pilha no canto de baixo: no computador fica à direita, longe do texto da coluna */
+.toasts {
     position: fixed; left: 16px; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 20;
-    width: fit-content; max-width: 560px; margin-inline: auto; padding: 10px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+}
+.toast {
+    width: fit-content; max-width: 560px; padding: 10px 16px;
     border-radius: 10px; background: var(--tinta); color: var(--sobre-tinta);
     font-size: 14px; font-weight: 500; box-shadow: var(--sombra-toast);
     transform: translateY(8px); opacity: 0; transition: opacity .2s, transform .2s;
 }
 .toast.visivel { transform: none; opacity: 1; }
-@media (min-width: 1024px) { .toast { left: calc(var(--lateral) + 16px); } }
+@media (min-width: 1024px) { .toasts { left: auto; right: 24px; width: 360px; align-items: flex-end; } }
 
 /* ── 13. Telas menores ──────────────────────────────────────────────────── */
 @media (max-width: 1279px) {
@@ -446,7 +463,7 @@ html:has(.faixa:not([hidden])) { scroll-padding-top: calc(var(--barra-h) + 56px)
 @media (max-width: 720px) {
     .barra { padding: 0 16px; }
     /* No celular a faixa da demonstração cabe numa linha */
-    .faixa { flex-wrap: nowrap; justify-content: space-between; padding: 8px 16px; font-size: 13px; }
+    :root[data-demo] .faixa { flex-wrap: nowrap; justify-content: space-between; padding: 8px 16px; font-size: 13px; }
     .faixa__longo { display: none; }
     .faixa__curto { display: inline; }
     .conteudo { padding: 28px 16px 32px; }
@@ -500,7 +517,7 @@ html:has(.faixa:not([hidden])) { scroll-padding-top: calc(var(--barra-h) + 56px)
         --sup-3: #e6e6ea; --borda-campo: #8e8e99; --desabilitado: #ececef; --desabilitado-texto: #8a8a94;
         --atencao: #9a5800; --atencao-fundo: #fcf1dd; --erro: #c4302b; --erro-fundo: #fdeeed;
     }
-    .lateral, .barra, .faixa, .toast, .botao-icone, .pular, .abertura__acoes, .privacidade { display: none !important; }
+    .lateral, .barra, .faixa, .toasts, .botao-icone, .pular, .abertura__acoes, .privacidade { display: none !important; }
     .app { display: block; }
     body:has(.relatorio:not(:empty)) { background: #fff; }
     body:has(.relatorio:not(:empty)) .app { display: none !important; }
