@@ -130,7 +130,15 @@ Taken from the demo mode.
 - **Content Security Policy** without `'unsafe-inline'`. SheetJS, ExcelJS
   and PDF.js are pinned and loaded with Subresource Integrity (SRI), only
   when they are needed (the PDF.js worker is pinned by version, since a
-  worker cannot take a hash); PDF.js runs with `eval` turned off.
+  worker cannot take a hash); PDF.js runs with `eval` turned off. That is
+  also why the known PDF.js 3.11 flaw CVE-2024-4367 (a crafted PDF running
+  code) does not apply here: it needs `eval`, which is off in PDF.js and
+  blocked by the CSP.
+- **Third parties.** The page loads nothing from outside on its own: the
+  fonts are hosted in the repository, and the page sends no referrer. The
+  pinned libraries come from cdnjs and cdn.sheetjs.com only when the first
+  PDF or spreadsheet is read; like any CDN, those servers see the
+  visitor's IP address. No analytics and no cookies.
 - **Text from the files is never trusted**: names and file names are escaped
   before they become HTML, and CSV cells that start with `=`, `+`, `-` or
   `@` get a leading apostrophe, so a spreadsheet cannot run a formula
@@ -144,7 +152,7 @@ Taken from the demo mode.
 | Reading | SheetJS 0.20 for the HR spreadsheets, PDF.js 3.11 for the Linx PDF |
 | Writing | ExcelJS 4.4 for the .xlsx; the CSV and the report are made by the app |
 | Data | `localStorage` for the register and the theme |
-| Fonts | Instrument Sans for the interface; JetBrains Mono for numbers, labels and the signature (Google Fonts) |
+| Fonts | Instrument Sans for the interface; JetBrains Mono for numbers, labels and the signature, hosted in the repository (SIL OFL 1.1) |
 | Tests | `node --test`, no dependencies, on every push (GitHub Actions) |
 
 Some decisions behind it:
@@ -169,8 +177,8 @@ Some decisions behind it:
   pending-by-person CSV.
 - The register stays in one browser. Clearing the site's data erases it,
   and another computer starts empty.
-- The libraries and fonts come from CDNs, so the first PDF or spreadsheet
-  of a session needs an internet connection.
+- The libraries come from CDNs, so the first PDF or spreadsheet of a
+  session needs an internet connection.
 - The demo loads its files with `fetch`, so it needs the page to be
   served over HTTP (GitHub Pages or a local server), not opened from
   disk.
@@ -202,6 +210,7 @@ index.html            the page: sidebar, the four steps and the report
 404.html              page for addresses that do not exist
 favicon.svg           the UnifyData mark
 css/style.css         light and dark themes, phone and print
+fonts/                Instrument Sans and JetBrains Mono (woff2), with their licenses
 js/
   boot.js             theme before the page shows up, and the error log
   nucleo.js           pure rules: parsing, register, matching, sheets, CSV

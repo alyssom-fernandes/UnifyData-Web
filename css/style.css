@@ -8,6 +8,18 @@
    ========================================================================= */
 
 /* ── 1. Tokens ──────────────────────────────────────────────────────────── */
+/* Fontes hospedadas no próprio projeto (SIL OFL 1.1, licenças em fonts/): a página não chama o Google Fonts */
+@font-face {
+    font-family: 'Instrument Sans';
+    src: url('../fonts/instrument-sans.woff2') format('woff2');
+    font-weight: 400 700; font-stretch: 85% 100%; font-style: normal; font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../fonts/jetbrains-mono.woff2') format('woff2');
+    font-weight: 400 700; font-style: normal; font-display: swap;
+}
+
 :root {
     --fonte: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;

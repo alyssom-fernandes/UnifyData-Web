@@ -126,7 +126,16 @@ Tiradas do modo de demonstração.
 - **Content Security Policy** sem `'unsafe-inline'`. SheetJS, ExcelJS e
   PDF.js têm versão fixa e são carregados com Subresource Integrity (SRI),
   só quando necessários (o worker do PDF.js tem versão fixa, mas sem hash,
-  porque um worker não aceita SRI); o PDF.js roda com `eval` desligado.
+  porque um worker não aceita SRI); o PDF.js roda com `eval` desligado. É
+  por isso também que a falha conhecida do PDF.js 3.11, CVE-2024-4367 (um
+  PDF preparado para executar código), não se aplica aqui: ela depende do
+  `eval`, que está desligado no PDF.js e bloqueado pela CSP.
+- **Terceiros.** A página não carrega nada de fora por conta própria: as
+  fontes ficam no repositório, e a página não envia o endereço de origem
+  (referrer). As bibliotecas de versão fixa vêm do cdnjs e do
+  cdn.sheetjs.com só quando o primeiro PDF ou planilha é lido; como em
+  qualquer CDN, esses servidores veem o IP de quem acessa. Sem analytics e
+  sem cookies.
 - **Texto vindo dos arquivos nunca é confiável**: nomes e nomes de arquivo são
   escapados antes de virar HTML, e células do CSV que começam com `=`,
   `+`, `-` ou `@` ganham um apóstrofo na frente, para a planilha não
@@ -140,7 +149,7 @@ Tiradas do modo de demonstração.
 | Leitura | SheetJS 0.20 para as planilhas do RH, PDF.js 3.11 para o PDF do Linx |
 | Escrita | ExcelJS 4.4 para o .xlsx; o CSV e o relatório são feitos pelo app |
 | Dados | `localStorage` para a base e o tema |
-| Fontes | Instrument Sans na interface; JetBrains Mono em números, rótulos e na assinatura (Google Fonts) |
+| Fontes | Instrument Sans na interface; JetBrains Mono em números, rótulos e na assinatura, hospedadas no repositório (SIL OFL 1.1) |
 | Testes | `node --test`, sem dependências, a cada push (GitHub Actions) |
 
 Algumas decisões por trás:
@@ -165,8 +174,8 @@ Algumas decisões por trás:
   Pendências por responsável.
 - A base fica em um navegador. Limpar os dados do site apaga a base, e
   outro computador começa vazio.
-- As bibliotecas e fontes vêm de CDNs, então o primeiro PDF ou planilha da
-  sessão precisa de internet.
+- As bibliotecas vêm de CDNs, então o primeiro PDF ou planilha da sessão
+  precisa de internet.
 - A demonstração busca os arquivos com `fetch`, então precisa da página
   servida por HTTP (GitHub Pages ou um servidor local), não aberta do
   disco.
@@ -197,6 +206,7 @@ index.html            a página: lateral, as quatro etapas e o relatório
 404.html              página para endereços que não existem
 favicon.svg           a marca do UnifyData
 css/style.css         temas claro e escuro, celular e impressão
+fonts/                Instrument Sans e JetBrains Mono (woff2), com as licenças
 js/
   boot.js             tema antes da página aparecer, e o registro de erros
   nucleo.js           regras puras: leitura, base, cruzamento, abas, CSV
