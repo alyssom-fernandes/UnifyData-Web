@@ -58,10 +58,6 @@ const esc = N.escaparHtml;
 const rolagem = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 const semExtensao = nome => nome.replace(/\.[^/.]+$/, '');
 const dataCurta = (data = new Date()) => data.toLocaleDateString('pt-BR');
-function dataArquivo(data = new Date()) {
-    const p = n => String(n).padStart(2, '0');
-    return `${data.getFullYear()}-${p(data.getMonth() + 1)}-${p(data.getDate())}`;
-}
 function tamanhoArquivo(bytes) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -738,11 +734,16 @@ function mostrarResultado() {
 }
 
 // ---------- Exportação: Excel ----------
+// Na demonstração, as três saídas avisam que os dados são inventados: um print ou um arquivo
+// compartilhado não passa por um fechamento real
+const AVISO_DEMO = 'Demonstração com dados fictícios, gerada com os arquivos de exemplo do UnifyData. Não é um fechamento real.';
+
 async function gerarExcel() {
     const ExcelJS = await carregarBiblioteca('exceljs');
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'UnifyData · AFN Systems';
     workbook.created = new Date();
+    if (modoDemo) workbook.subject = AVISO_DEMO;
 
     const headerFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF58111A' } };
     const headerFont  = { color: { argb: 'FFFFFFFF' }, bold: true };
@@ -801,6 +802,13 @@ async function gerarExcel() {
             });
             col.width = Math.min(max + 3, 48);
         });
+
+        // Depois das larguras, para o aviso longo não alargar a coluna dos nomes
+        if (modoDemo) {
+            ws.addRow([]);
+            ws.addRow([AVISO_DEMO]).getCell(1).font = { italic: true, color: { argb: 'FF808080' } };
+            ws.headerFooter.oddHeader = '&C&BDEMONSTRAÇÃO: dados fictícios';
+        }
     });
 
     if (!workbook.worksheets.length) workbook.addWorksheet('Dados');
@@ -812,7 +820,7 @@ $('btn-download').addEventListener('click', async e => {
     ocupado(btn, true, 'Gerando…');
     try {
         const buffer = await gerarExcel();
-        baixarArquivo(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `Fechamento_UnifyData_${dataArquivo()}.xlsx`);
+        baixarArquivo(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${N.nomeDoArquivo(periodoFechamento, { demo: modoDemo })}.xlsx`);
         toast('Planilha baixada.');
     } catch (err) {
         mostrarAviso($('resultado-aviso'), 'erro', err instanceof ErroUsuario ? err.message : 'Não foi possível gerar a planilha. Tente de novo ou use o CSV.');
@@ -824,7 +832,7 @@ $('btn-download').addEventListener('click', async e => {
 
 // ---------- Exportação: CSV ----------
 $('btn-csv').addEventListener('click', () => {
-    baixarArquivo(N.gerarCSV(N.agruparPorEmpresa(prontos, origens), origens), `Fechamento_UnifyData_${dataArquivo()}.csv`, 'text/csv;charset=utf-8');
+    baixarArquivo(N.gerarCSV(N.agruparPorEmpresa(prontos, origens), origens), `${N.nomeDoArquivo(periodoFechamento, { demo: modoDemo })}.csv`, 'text/csv;charset=utf-8');
     toast('CSV baixado.');
 });
 
@@ -845,6 +853,7 @@ function montarRelatorio(grupos, total) {
             <div><h1>Fechamento de consumo</h1><p>${esc(origens.join(' · '))}${periodoFechamento ? ` · Vencimentos de ${esc(periodoFechamento)}` : ''}</p></div>
             <div class="relatorio__meta">UnifyData<br>${dataCurta()}</div>
         </div>
+        ${modoDemo ? `<p class="relatorio__demo">${AVISO_DEMO}</p><div class="relatorio__marca" aria-hidden="true">Demonstração</div>` : ''}
         <div class="relatorio__resumo">
             <div><span>Funcionários</span><b>${prontos.length}</b></div>
             <div><span>Empresas</span><b>${grupos.length}</b></div>

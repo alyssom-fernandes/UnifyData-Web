@@ -283,6 +283,17 @@
         return cab;
     }
 
+    // Nome dos arquivos exportados pelo mês dos vencimentos: "01/09/2026 a 30/09/2026" → Fechamento_UnifyData_2026-09.
+    // Vencimentos em meses diferentes viram "2026-09_a_2026-10"; sem período, vale a data de hoje.
+    // Na demonstração o nome termina em _DEMO, para o arquivo não passar por um fechamento real.
+    function nomeDoArquivo(periodo, { demo = false, hoje = new Date() } = {}) {
+        const meses = Array.from(String(periodo || '').matchAll(/\d{2}\/(\d{2})\/(\d{4})/g), m => `${m[2]}-${m[1]}`).sort();
+        const p = n => String(n).padStart(2, '0');
+        const rotulo = !meses.length ? `${hoje.getFullYear()}-${p(hoje.getMonth() + 1)}-${p(hoje.getDate())}`
+            : meses[0] === meses[meses.length - 1] ? meses[0] : `${meses[0]}_a_${meses[meses.length - 1]}`;
+        return `Fechamento_UnifyData_${rotulo}${demo ? '_DEMO' : ''}`;
+    }
+
     // CSV separado por ; e com vírgula decimal, como o Excel brasileiro espera
     function gerarCSV(grupos, origens) {
         // Texto que começa com = + - @ viraria fórmula ao abrir no Excel: o apóstrofo neutraliza
@@ -308,6 +319,6 @@
     return {
         SEM_EMPRESA, normalizar, somenteDigitos, formatarCPF, escaparHtml, nomeExibicao, formatarMoeda, listaPorExtenso,
         lerCSV, empresaDoArquivo, extrairRH, extrairPessoasPdf, atualizarBase, empresasDaBase,
-        lerRelatorioLinx, cruzar, consumoDe, agruparPorEmpresa, nomeDeAba, letraColuna, cabecalhoPlanilha, gerarCSV
+        lerRelatorioLinx, cruzar, consumoDe, agruparPorEmpresa, nomeDeAba, letraColuna, cabecalhoPlanilha, nomeDoArquivo, gerarCSV
     };
 });

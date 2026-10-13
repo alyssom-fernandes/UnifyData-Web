@@ -131,6 +131,17 @@ test('CSV para o Excel brasileiro: BOM, ponto e vírgula, vírgula decimal e sem
     assert.equal(linhas[1], `"Posto; Centro";"'=HYPERLINK(""x"")";123.456.789-01;1,50;2,00;2,00`);
 });
 
+test('nome do arquivo pelo mês dos vencimentos, com _DEMO na demonstração', () => {
+    const hoje = new Date(2026, 9, 13);
+    assert.equal(N.nomeDoArquivo('01/09/2026 a 30/09/2026', { hoje }), 'Fechamento_UnifyData_2026-09');
+    assert.equal(N.nomeDoArquivo('01/09/2026 a 30/09/2026; 01/09/2026 a 30/09/2026', { hoje }), 'Fechamento_UnifyData_2026-09');
+    assert.equal(N.nomeDoArquivo('16/09/2026 a 15/10/2026', { hoje }), 'Fechamento_UnifyData_2026-09_a_2026-10');
+    assert.equal(N.nomeDoArquivo('', { hoje }), 'Fechamento_UnifyData_2026-10-13', 'sem período, vale a data de hoje');
+    assert.equal(N.nomeDoArquivo('01/09/2026 a 30/09/2026', { demo: true, hoje }), 'Fechamento_UnifyData_2026-09_DEMO');
+    const { periodo } = N.lerRelatorioLinx(exemplo('RESTAURANTE.csv'), 'RESTAURANTE');
+    assert.equal(N.nomeDoArquivo(periodo, { hoje }), 'Fechamento_UnifyData_2026-09');
+});
+
 test('textos de exibição', () => {
     assert.equal(N.formatarCPF('12345678901'), '123.456.789-01');
     assert.equal(N.formatarCPF('123'), '123');

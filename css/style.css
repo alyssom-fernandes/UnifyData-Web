@@ -529,6 +529,12 @@ u { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .relatorio__cabecalho h1 { font-size: 15pt; letter-spacing: -.01em; }
 .relatorio__cabecalho p { margin-top: 2pt; color: #444; }
 .relatorio__meta { color: #444; text-align: right; }
+/* Demonstração: aviso no topo e marca-d'água, que o Chrome repete em todas as páginas (position: fixed) */
+.relatorio__demo { margin: -4pt 0 12pt; padding: 5pt 8pt; border: 1pt solid #111; font-size: 9pt; font-weight: 600; }
+.relatorio__marca {
+    position: fixed; inset: 0; z-index: -1; display: grid; place-items: center; pointer-events: none;
+    font: 700 80pt/1 var(--fonte); letter-spacing: -.02em; color: rgba(0, 0, 0, .05); transform: rotate(-32deg);
+}
 .relatorio__resumo { display: flex; gap: 22pt; margin-bottom: 14pt; }
 .relatorio__resumo span { display: block; color: #555; font-size: 8.5pt; }
 .relatorio__resumo b { font-size: 12pt; font-variant-numeric: tabular-nums; }
