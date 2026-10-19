@@ -1,11 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Closing
+- The app now reads the *Total geral* line of each Linx report and
+  compares it with the sum of the people it read. The tape gets a
+  *Total geral no relatório* line, and a warning appears (also in the
+  printed report) when they differ. A report without that line is not
+  checked, and the app says so.
+
+### Pending items
+- When the CPF typed for a person without a register entry already
+  belongs to another code, a notice shows whose it is and offers to link
+  the code to that person. Saving as typed still works.
+
 ## 1.1.0 (2026-10-13)
 
 ### Closing
 - The result opens with a reconciliation tape, like an adding-machine
   roll: each store's total in Linx, their sum, what was ignored and what
-  goes to payroll. The sum matches the grand total of the Linx reports.
+  goes to payroll.
 - Each step's number is part of its title.
 - On wide screens (1200 px or more) the column is wider and the company
   table sits beside the tape.
@@ -22,8 +36,9 @@
 ### Outputs
 - Files are named after the month of the due dates
   (`Fechamento_UnifyData_2026-09.xlsx`).
-- In the demo, the Excel, the CSV and the A4 report say the data is made
-  up, and the file names end in `_DEMO`.
+- In the demo, the Excel and the A4 report say the data is made up, and
+  the file names (Excel, CSV) end in `_DEMO`. The CSV itself carries no
+  notice.
 - The report and the Excel header use the brand teal instead of burgundy,
   and the report summary shows the same reconciliation as the tape.
 

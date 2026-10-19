@@ -19,6 +19,17 @@ leave it. The interface is in Portuguese.
 **[Open UnifyData](https://alyssom-fernandes.github.io/UnifyData-Web/)** · **[Try the demo](https://alyssom-fernandes.github.io/UnifyData-Web/?demo=1)**, with
 made-up files: nothing is saved.
 
+## Why two repositories
+
+One problem, two strategies for matching Linx to HR. They are not a
+duplicate: each fits a different data situation.
+
+- **By code, here:** when Linx and HR share the employee code
+  (*matrícula*), the match is exact and needs no review.
+- **By name, in the [Python version](https://github.com/alyssom-fernandes/UnifyData-Python):**
+  when there is no common code, the name is the only link, so similar
+  names are shown to a person to confirm.
+
 [![Tests](https://github.com/alyssom-fernandes/UnifyData-Web/actions/workflows/testes.yml/badge.svg)](https://github.com/alyssom-fernandes/UnifyData-Web/actions/workflows/testes.yml)
 ![JavaScript](https://img.shields.io/badge/JavaScript-no_framework-f7df1e?style=flat-square&logo=javascript&logoColor=black)
 ![No build](https://img.shields.io/badge/build_step-none-success?style=flat-square)
@@ -108,8 +119,15 @@ screenshot or a shared file cannot pass for a real closing.
   listed to be fixed on the spot: CPF with an input mask, company with
   autocomplete (or a new one). What is saved there also goes into the
   register.
+- When the CPF typed for a person is already in the register under
+  another code, a notice says whose it is and offers to link the Linx
+  code to that person (the same person can have two codes in Linx).
 - Or they are ignored, and the result and the report say who was left
   out and how much.
+- The result checks itself against the reports: each Linx report ends
+  with a *Total geral* line, and the app compares it with the sum of the
+  people it read. The tape shows a *Total geral no relatório* line, and a
+  warning appears (also in the printed report) when they differ.
 
 ### Phone, themes and details
 
