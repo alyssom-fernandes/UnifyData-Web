@@ -169,3 +169,49 @@ test('textos de exibição', () => {
     assert.equal(N.empresaDoArquivo('Empregados Posto Central.xls'), 'Posto Central');
     assert.equal(N.escaparHtml('<b a="1">'), '&lt;b a=&quot;1&quot;&gt;');
 });
+
+// ---------- Conferência com o "Total geral" impresso no relatório ----------
+const relatorioSintetico = blocoDoBruno => [
+    'Vencimento: 01/09/2026 a 30/09/2026;;;',
+    'Conta: 1 Responsável: 1 - ANA;;;',
+    'Total;;18,50;;;',
+    'Conta: 1 Responsável: 2 - BRUNO;;;',
+    blocoDoBruno,
+    'Total geral;1.234,56;2.018,60;;;',
+].join('\r\n');
+
+function fecharComTudoLigado(texto) {
+    const { registros, totalGeral } = N.lerRelatorioLinx(texto, 'LOJA');
+    const base = { 1: { nome: 'ANA', cpf: '', empresa: 'Posto' }, 2: { nome: 'BRUNO', cpf: '', empresa: 'Posto' } };
+    const { prontos } = N.cruzar(registros, base);
+    return N.conferencia(prontos, [], ['LOJA'], { LOJA: totalGeral });
+}
+
+test('Total geral: o valor do relatório é lido e guardado por relatório', () => {
+    assert.equal(N.lerRelatorioLinx(exemplo('LOJA.csv'), 'LOJA').totalGeral, 1385.6);
+    assert.equal(N.lerRelatorioLinx(exemplo('RESTAURANTE.csv'), 'RESTAURANTE').totalGeral, 1296.2);
+    assert.equal(N.lerRelatorioLinx('Conta: 1 Responsável: 1 - ANA;;;\r\nTotal;;18,50;;;', 'X').totalGeral, null, 'sem a linha, não há o que comparar');
+});
+
+test('Total geral que bate com a soma dos responsáveis não gera divergência', () => {
+    const c = fecharComTudoLigado(relatorioSintetico('Total;1.234,56;2.000,10;;;'));
+    assert.equal(c.consumo, 2018.6);
+    assert.equal(c.noRelatorio, 2018.6);
+    assert.deepEqual(c.divergentes, []);
+});
+
+test('Total geral que não bate (bloco de layout desconhecido) vira divergência', () => {
+    // O bloco do BRUNO não termina em "Total": o leitor não o reconhece e o valor some da soma
+    const c = fecharComTudoLigado(relatorioSintetico('Subtotal;1.234,56;2.000,10;;;'));
+    assert.equal(c.consumo, 18.5);
+    assert.equal(c.noRelatorio, 2018.6);
+    assert.deepEqual(c.divergentes.map(d => [d.origem, d.total, d.relatorio]), [['LOJA', 18.5, 2018.6]]);
+});
+
+test('conferência sem o Total geral de algum relatório não compara', () => {
+    const { prontos } = N.cruzar([{ matricula: '1', nome: 'ANA', vencido: 0, total: 5, origem: 'LOJA' }], { 1: { nome: 'ANA', cpf: '', empresa: 'Posto' } });
+    const c = N.conferencia(prontos, [], ['LOJA'], { LOJA: null });
+    assert.equal(c.noRelatorio, null);
+    assert.deepEqual(c.divergentes, []);
+    assert.equal(N.conferencia(prontos, [], ['LOJA']).noRelatorio, null, 'sem o argumento, nada é comparado');
+});

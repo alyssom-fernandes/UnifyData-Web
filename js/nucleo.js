@@ -156,9 +156,11 @@
     }
 
     // ---------- Relatório do Linx "Pendências por responsável" ----------
-    // Bloco por responsável, fechado por uma linha "Total;vencido;total"
+    // Bloco por responsável, fechado por uma linha "Total;vencido;total". A linha "Total geral" do fim do relatório
+    // vai em totalGeral (null se não houver), para a conferência comparar com a soma dos responsáveis lidos.
     function lerRelatorioLinx(texto, origem) {
         const registros = [];
+        let totalGeral = null;
         const paraNumero = s => parseFloat(String(s).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.'));
         let matricula = null, nome = null;
 
@@ -168,8 +170,15 @@
                 if (m) { matricula = m[1].trim(); nome = m[2].trim().toUpperCase().replace(/\s+/g, ' '); }
             }
             const t = linha.trim();
+            if (/^total\s+geral/i.test(t)) {
+                // Vem depois do último responsável: o valor que o próprio Linx imprimiu
+                const campos = t.split(';').map(p => p.trim()).filter(Boolean);
+                const valor = campos.length >= 2 ? paraNumero(campos[campos.length >= 3 ? 2 : 1]) : NaN;
+                if (!isNaN(valor)) totalGeral = Math.round(((totalGeral ?? 0) + valor) * 100) / 100;
+                matricula = null;
+                continue;
+            }
             if (matricula && t.toLowerCase().startsWith('total')) {
-                if (/^total\s+geral/i.test(t)) { matricula = null; continue; }
                 const campos = linha.split(';').map(p => p.trim());
                 // "Total;;18,50": sem vencido. Nos demais casos, campos vazios são ignorados.
                 const partes = !campos[1] && campos[2] ? ['Total', '0', campos[2]] : campos.filter(Boolean);
@@ -183,7 +192,7 @@
         }
         // Período do relatório, para identificar o fechamento: "Vencimento: 01/09/2026 a 30/09/2026"
         const periodo = /Vencimento:\s*(\d{2}\/\d{2}\/\d{4}\s*a\s*\d{2}\/\d{2}\/\d{4})/i.exec(texto)?.[1] || '';
-        return { registros, periodo: periodo.replace(/\s+/g, ' ') };
+        return { registros, periodo: periodo.replace(/\s+/g, ' '), totalGeral };
     }
 
     // ---------- Cruzamento ----------
@@ -245,16 +254,25 @@
     }
 
     // Conferência com o Linx, como numa fita de calculadora: o consumo de cada loja (com quem foi ignorado),
-    // a soma, o que ficou de fora e o que vai para a folha. Fecha com o "Total geral" do relatório do Linx.
-    function conferencia(prontos, ignoradas, origens) {
+    // a soma, o que ficou de fora e o que vai para a folha. Com o "Total geral" lido de cada relatório
+    // (totaisRelatorio, por origem), confere a soma lida contra o que o Linx imprimiu e lista as divergências.
+    function conferencia(prontos, ignoradas, origens, totaisRelatorio = {}) {
         const centavos = v => Math.round(v * 100) / 100;
+        const noRelatorio = origem => (Object.hasOwn(totaisRelatorio, origem) ? totaisRelatorio[origem] : null);
         const porOrigem = origens.map(origem => ({
             origem,
-            total: centavos([...prontos, ...ignoradas].reduce((s, r) => s + consumoDe(r.consumos, origem).total, 0))
+            total: centavos([...prontos, ...ignoradas].reduce((s, r) => s + consumoDe(r.consumos, origem).total, 0)),
+            relatorio: noRelatorio(origem)
         }));
         const consumo = centavos(porOrigem.reduce((s, o) => s + o.total, 0));
         const ignorado = centavos(ignoradas.reduce((s, p) => s + origens.reduce((t, o) => t + consumoDe(p.consumos, o).total, 0), 0));
-        return { porOrigem, consumo, ignorado, aDescontar: centavos(consumo - ignorado) };
+        const completo = porOrigem.length > 0 && porOrigem.every(o => o.relatorio !== null);
+        return {
+            porOrigem, consumo, ignorado, aDescontar: centavos(consumo - ignorado),
+            // null quando algum relatório não traz a linha "Total geral": não há com o que comparar
+            noRelatorio: completo ? centavos(porOrigem.reduce((s, o) => s + o.relatorio, 0)) : null,
+            divergentes: porOrigem.filter(o => o.relatorio !== null && Math.abs(centavos(o.total - o.relatorio)) >= 0.01)
+        };
     }
 
     // "01/09/2026 a 30/09/2026" → "setembro de 2026"; vencimentos em mais de um mês ficam como vieram
