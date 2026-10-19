@@ -17,6 +17,17 @@ build e sem servidor. Os arquivos são lidos no computador e não saem dele.
 **[Abrir o UnifyData](https://alyssom-fernandes.github.io/UnifyData-Web/)** · **[Ver a demonstração](https://alyssom-fernandes.github.io/UnifyData-Web/?demo=1)**, com
 arquivos fictícios: nada é salvo.
 
+## Por que dois repositórios
+
+Um problema, duas estratégias para ligar o Linx ao RH. Não é duplicação:
+cada uma serve a uma situação diferente dos dados.
+
+- **Por código, aqui:** quando o Linx e o RH têm a matrícula em comum, o
+  cruzamento é exato e dispensa revisão.
+- **Por nome, na [versão Python](https://github.com/alyssom-fernandes/UnifyData-Python):**
+  quando não há código em comum, o nome é a única ligação, então nomes
+  parecidos vão para uma pessoa confirmar.
+
 [![Testes](https://github.com/alyssom-fernandes/UnifyData-Web/actions/workflows/testes.yml/badge.svg)](https://github.com/alyssom-fernandes/UnifyData-Web/actions/workflows/testes.yml)
 ![JavaScript](https://img.shields.io/badge/JavaScript-sem_framework-f7df1e?style=flat-square&logo=javascript&logoColor=black)
 ![Sem build](https://img.shields.io/badge/build-nenhum-success?style=flat-square)
@@ -104,8 +115,15 @@ um print ou arquivo compartilhado não passar por um fechamento real.
 - Quem está no Linx sem cadastro, ou sem empresa, aparece para ser
   resolvido na hora: CPF com máscara, empresa com sugestões (ou uma
   nova). O que é salvo ali também entra na base.
+- Quando o CPF digitado para uma pessoa já está na base com outra
+  matrícula, um aviso diz de quem é e oferece vincular a matrícula do
+  Linx a essa pessoa (a mesma pessoa pode ter dois códigos no Linx).
 - Ou é ignorado, e o resultado e o relatório dizem quem ficou de fora e
   quanto.
+- O resultado se confere com os relatórios: cada relatório do Linx termina
+  com uma linha *Total geral*, e o app a compara com a soma das pessoas
+  que leu. A fita mostra uma linha *Total geral no relatório*, e um aviso
+  aparece (também no relatório impresso) quando diferem.
 
 ### Celular, temas e detalhes
 

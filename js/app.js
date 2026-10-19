@@ -98,6 +98,7 @@ let prontos    = [];     // { nome, cpf, empresa, consumos: { origem: { vencido,
 let pendencias = [];     // { id, tipo, matricula, nomeLinx, cpf, valor, origem, consumos }
 let ignoradas  = [];
 let periodoFechamento = ''; // "01/09/2026 a 30/09/2026", lido dos relatórios do Linx
+let totaisRelatorio = {};   // "Total geral" impresso em cada relatório do Linx, por origem (só os que trazem a linha)
 
 function salvarBase() {
     if (modoDemo) return;
@@ -495,6 +496,7 @@ function limparFechamento() {
     ignoradas = [];
     origens = [];
     periodoFechamento = '';
+    totaisRelatorio = {};
     listaPendencias.innerHTML = '';
     $('relatorio').innerHTML = '';
     etapaPendencias.hidden = true;
@@ -516,10 +518,11 @@ btnProcessar.addEventListener('click', async () => {
 
         for (const arquivo of envioLinx.arquivos) {
             const origem = semExtensao(arquivo.name);
-            const { registros, periodo } = N.lerRelatorioLinx(await lerTexto(arquivo), origem);
+            const { registros, periodo, totalGeral } = N.lerRelatorioLinx(await lerTexto(arquivo), origem);
             if (!registros.length) { vazios.push(arquivo.name); continue; }
             if (!origens.includes(origem)) origens.push(origem);
             if (periodo) periodos.add(periodo);
+            if (totalGeral !== null) totaisRelatorio[origem] = Math.round(((totaisRelatorio[origem] ?? 0) + totalGeral) * 100) / 100;
             consumos.push(...registros);
         }
         if (!consumos.length) {
@@ -535,6 +538,7 @@ btnProcessar.addEventListener('click', async () => {
         renderizarPendencias();
     } catch (err) {
         origens = [];
+        totaisRelatorio = {};
         mostrarAviso(consumosAviso, 'erro', mensagemDeErro(err));
     } finally {
         ocupado(btnProcessar, false);
@@ -579,6 +583,7 @@ function htmlPendencia(p) {
                 <button class="btn btn--fantasma" type="button" data-acao="ignorar">Ignorar</button>
             </div>
             <p class="pendencia__erro" role="alert" hidden></p>
+            ${semCadastro ? '<div class="pendencia__cpf" role="status" aria-live="polite" hidden></div>' : ''}
         </div>
     </article>`;
 }
@@ -617,6 +622,39 @@ function erroPendencia(artigo, campo, mensagem) {
     campo.focus();
 }
 
+// Pessoas da base que já têm esse CPF em outra matrícula (a mesma pessoa pode ter mais de um código no Linx)
+function donosDoCpf(cpf, matricula) {
+    if (cpf.length !== 11) return [];
+    return Object.entries(employeeDB).filter(([mat, e]) => mat !== matricula && e.cpf === cpf).map(([mat, e]) => ({ matricula: mat, ...e }));
+}
+
+function atualizarAvisoDoCpf(artigo) {
+    const aviso = artigo.querySelector('.pendencia__cpf');
+    const p = pendencias.find(d => d.id === artigo.dataset.id);
+    if (!aviso || !p) return;
+    const donos = donosDoCpf(N.somenteDigitos(artigo.querySelector('[name=cpf]').value), p.matricula);
+    if (!donos.length) { aviso.hidden = true; aviso.innerHTML = ''; return; }
+    const [dono] = donos;
+    const outros = donos.length > 1 ? ` (e mais ${donos.length - 1} ${donos.length === 2 ? 'matrícula' : 'matrículas'})` : '';
+    const podeVincular = dono.empresa !== N.SEM_EMPRESA;
+    aviso.innerHTML = `<span>Esse CPF já é de <b>${esc(N.nomeExibicao(dono.nome))}</b>, matrícula <span class="mono">${esc(dono.matricula)}</span>${podeVincular ? ` · ${esc(dono.empresa)}` : ''}${outros}.
+        Se for a mesma pessoa com outro código, vincule; se não, confira o CPF.</span>
+        ${podeVincular ? `<button class="btn btn--secundario" type="button" data-acao="vincular" data-matricula="${esc(dono.matricula)}">Vincular a ${esc(N.nomeExibicao(dono.nome))}</button>` : ''}`;
+    aviso.hidden = false;
+}
+
+// A matrícula do Linx passa a valer para a pessoa que já tem esse CPF: mesmo nome, CPF e empresa da base
+function vincularAoDono(artigo, matriculaDono) {
+    const p = pendencias.find(d => d.id === artigo.dataset.id);
+    const dono = employeeDB[matriculaDono];
+    if (!p || !dono || dono.empresa === N.SEM_EMPRESA) return;
+    employeeDB[p.matricula] = { nome: dono.nome, cpf: dono.cpf, empresa: dono.empresa };
+    try { salvarBase(); } catch (err) { toast(err.message); }
+    renderizarBase();
+    prontos.push({ nome: dono.nome, cpf: dono.cpf, empresa: dono.empresa, consumos: p.consumos });
+    if (!retirarPendencia(p.id, artigo)) toast(`${N.nomeExibicao(p.nomeLinx)} vinculado a ${N.nomeExibicao(dono.nome)} → ${dono.empresa}`);
+}
+
 function resolverPendencia(artigo) {
     const p = pendencias.find(d => d.id === artigo.dataset.id);
     const campoEmpresa = artigo.querySelector('[name=empresa]');
@@ -650,6 +688,8 @@ listaPendencias.addEventListener('click', e => {
     const artigo = btn.closest('.pendencia');
     if (btn.dataset.acao === 'salvar') {
         resolverPendencia(artigo);
+    } else if (btn.dataset.acao === 'vincular') {
+        vincularAoDono(artigo, btn.dataset.matricula);
     } else {
         const p = pendencias.find(d => d.id === artigo.dataset.id);
         ignoradas.push(p);
@@ -673,15 +713,16 @@ listaPendencias.addEventListener('input', e => {
     if (e.target.name !== 'cpf') return;
     const d = N.somenteDigitos(e.target.value).slice(0, 11);
     e.target.value = d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1-$2');
+    atualizarAvisoDoCpf(e.target.closest('.pendencia'));
 });
 
 // ---------- Etapa 4: Resultado ----------
 // A fita de conferência: cada loja (+), o consumo no Linx (=), o que foi ignorado (−) e o que vai para a folha.
-// O consumo de cada loja fecha com o "Total geral" do relatório do Linx.
+// A soma lida de cada loja é conferida com o "Total geral" impresso no relatório do Linx.
 const numeroFita = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function htmlFita(grupos, total) {
-    const c = N.conferencia(prontos, ignoradas, origens);
+    const c = N.conferencia(prontos, ignoradas, origens, totaisRelatorio);
     if (c.aDescontar !== Math.round(total * 100) / 100) console.warn('Conferência não fecha com a planilha', c, total);
     const linha = (rotulo, valor, op, classe = '') => `
         <div class="fita__linha${classe}"><dt><span>${esc(rotulo)}</span></dt><dd>${valor}<i class="fita__op" aria-hidden="true">${op}</i></dd></div>`;
@@ -693,10 +734,29 @@ function htmlFita(grupos, total) {
         <dl>
             ${c.porOrigem.map(o => linha(o.origem, numeroFita.format(o.total), '+')).join('')}
             ${linha('Total no Linx', numeroFita.format(c.consumo), '=', ' fita__soma')}
+            ${c.noRelatorio === null ? '' : linha('Total geral no relatório', numeroFita.format(c.noRelatorio), '', c.divergentes.length ? ' fita__diverge' : ' fita__confere')}
             ${linha(n ? `Ignorado (${n} ${n === 1 ? 'pessoa' : 'pessoas'})` : 'Ignorado', `−${numeroFita.format(c.ignorado)}`, '', ' fita__menos')}
             <div class="fita__total"><dt>A descontar</dt><dd>${N.formatarMoeda(total)}</dd></div>
         </dl>
         <p class="fita__pe">${prontos.length} ${prontos.length === 1 ? 'funcionário' : 'funcionários'} em ${grupos.length} ${grupos.length === 1 ? 'empresa' : 'empresas'}</p>`;
+}
+
+// Se a soma lida não fecha com o "Total geral" do relatório, algum responsável não foi reconhecido: avisa antes de usar a planilha
+function textoDivergencia(divergentes) {
+    return divergentes.map(d => `${d.origem}: lido ${N.formatarMoeda(d.total)}, relatório ${N.formatarMoeda(d.relatorio)}`).join('; ');
+}
+
+function avisarDivergenciaDoTotalGeral(vazio) {
+    const aviso = $('resultado-divergencia');
+    const c = N.conferencia(prontos, ignoradas, origens, totaisRelatorio);
+    if (vazio) { esconderAviso(aviso); return; }
+    if (c.divergentes.length) {
+        mostrarAviso(aviso, 'atencao', `<b>A soma lida não fecha com o Total geral do relatório do Linx</b> (${esc(textoDivergencia(c.divergentes))}). Algum responsável pode não ter sido reconhecido: confira o arquivo antes de usar a planilha.`);
+    } else if (c.noRelatorio === null) {
+        mostrarAviso(aviso, 'info', 'Algum relatório não traz a linha “Total geral”, então a soma lida não pôde ser conferida com ele.');
+    } else {
+        esconderAviso(aviso);
+    }
 }
 
 function mostrarResultado() {
@@ -717,6 +777,7 @@ function mostrarResultado() {
     esconderAviso($('resultado-aviso'));
 
     $('resultado-fita').innerHTML = vazio ? '' : htmlFita(grupos, total);
+    avisarDivergenciaDoTotalGeral(vazio);
 
     $('resultado-tabela').innerHTML = vazio ? '' : `
         <table class="tabela${origens.length >= 3 ? ' tabela--varias' : ''}">
@@ -754,8 +815,8 @@ function mostrarResultado() {
 }
 
 // ---------- Exportação: Excel ----------
-// Na demonstração, as três saídas avisam que os dados são inventados: um print ou um arquivo
-// compartilhado não passa por um fechamento real
+// Na demonstração, o Excel e o relatório avisam que os dados são inventados (o CSV só leva _DEMO no nome do arquivo):
+// um print ou um arquivo compartilhado não passa por um fechamento real
 const AVISO_DEMO = 'Demonstração com dados fictícios, gerada com os arquivos de exemplo do UnifyData. Não é um fechamento real.';
 
 async function gerarExcel() {
@@ -867,7 +928,7 @@ function montarRelatorio(grupos, total) {
     const notaIgnoradas = ignoradas.length === 0 ? 'Sem pendências ignoradas.'
         : ignoradas.length === 1 ? `1 pendência ignorada não consta neste relatório: ${esc(ignoradas[0].nomeLinx)} (${N.formatarMoeda(ignoradas[0].valor)}).`
         : `${ignoradas.length} pendências ignoradas não constam neste relatório: ${ignoradas.map(p => esc(p.nomeLinx)).join(', ')} (${N.formatarMoeda(ignoradas.reduce((s, p) => s + p.valor, 0))}).`;
-    const conferido = N.conferencia(prontos, ignoradas, origens);
+    const conferido = N.conferencia(prontos, ignoradas, origens, totaisRelatorio);
 
     rel.innerHTML = `
         <div class="relatorio__cabecalho">
@@ -875,6 +936,7 @@ function montarRelatorio(grupos, total) {
             <div class="relatorio__meta">UnifyData<br>${dataCurta()}</div>
         </div>
         ${modoDemo ? `<p class="relatorio__demo">${AVISO_DEMO}</p><div class="relatorio__marca" aria-hidden="true">Demonstração</div>` : ''}
+        ${conferido.divergentes.length ? `<p class="relatorio__demo">Atenção: a soma lida não fecha com o Total geral do relatório do Linx (${esc(textoDivergencia(conferido.divergentes))}).</p>` : ''}
         <div class="relatorio__resumo">
             <div><span>Funcionários</span><b>${prontos.length}</b></div>
             <div><span>Empresas</span><b>${grupos.length}</b></div>

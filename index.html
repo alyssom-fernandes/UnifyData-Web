@@ -28,7 +28,7 @@
     <script src="js/boot.js?v=2026-10-13"></script>
     <link rel="preload" href="fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=2026-10-13">
+    <link rel="stylesheet" href="css/style.css?v=2026-10-19">
 </head>
 <body>
     <svg class="sprite" aria-hidden="true">
@@ -194,6 +194,7 @@
                     <h2 id="resultado-titulo" tabindex="-1"><span class="cartao__num" aria-hidden="true">4</span><span class="visualmente-oculto">Etapa 4: </span><span id="resultado-titulo-texto">Fechamento pronto</span></h2>
                     <p class="cartao__texto" id="resultado-subtitulo"></p>
                     <!-- A conta do fechamento como numa fita de calculadora, ao lado da tabela por empresa -->
+                    <div class="aviso" id="resultado-divergencia" role="status" aria-live="polite" hidden></div>
                     <div class="resultado-grade">
                         <section class="fita" id="resultado-fita" aria-label="Conferência com o Linx"></section>
                         <div class="tabela-rolagem" id="resultado-tabela"></div>
@@ -230,7 +231,7 @@
     <section class="relatorio" id="relatorio" aria-hidden="true"></section>
     <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
-    <script src="js/nucleo.js?v=2026-10-13"></script>
-    <script src="js/app.js?v=2026-10-13"></script>
+    <script src="js/nucleo.js?v=2026-10-19"></script>
+    <script src="js/app.js?v=2026-10-19"></script>
 </body>
 </html>
