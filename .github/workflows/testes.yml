@@ -15,8 +15,8 @@ jobs:
         # O README promete Node 22 ou mais novo
         node: [22, 24]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
       - run: node --test
