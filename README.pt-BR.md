@@ -17,6 +17,8 @@ build e sem servidor. Os arquivos são lidos no computador e não saem dele.
 **[Abrir o UnifyData](https://alyssom-fernandes.github.io/UnifyData-Web/)** · **[Ver a demonstração](https://alyssom-fernandes.github.io/UnifyData-Web/?demo=1)**, com
 arquivos fictícios: nada é salvo.
 
+**Estudo de caso:** [como foi construído e por quê, com links para o código](https://alyssom-fernandes.github.io/portfolio/projetos/unifydata/) no meu portfólio.
+
 ## Por que dois repositórios
 
 Um problema, duas estratégias para ligar o Linx ao RH. Não é duplicação:
