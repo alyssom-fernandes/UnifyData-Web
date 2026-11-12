@@ -20,3 +20,6 @@ Docs Teste/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Dependências de desenvolvimento (ESLint)
+node_modules/
