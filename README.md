@@ -19,6 +19,8 @@ leave it. The interface is in Portuguese.
 **[Open UnifyData](https://alyssom-fernandes.github.io/UnifyData-Web/)** · **[Try the demo](https://alyssom-fernandes.github.io/UnifyData-Web/?demo=1)**, with
 made-up files: nothing is saved.
 
+**Case study:** [how it was built and why, with links to the code](https://alyssom-fernandes.github.io/portfolio/en/projetos/unifydata/) on my portfolio.
+
 ## Why two repositories
 
 One problem, two strategies for matching Linx to HR. They are not a
